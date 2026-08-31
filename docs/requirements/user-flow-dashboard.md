@@ -47,9 +47,9 @@
 ## 4. Reports Flow
 
 1. From top nav → **Reports**.
-2. Period selector: This Month / Last Month / Custom Range / Year-to-date.
+2. Period selector: This Week / This Month / Last Month / Year-to-Date / Custom Range (unified with mobile).
 3. Summary cards + category breakdown (same data model as mobile, richer chart on the larger screen).
-4. **Export** button → choose PDF or Excel/CSV → downloads directly (no share sheet needed on web, just a file download).
+4. **Export** button → choose PDF or Excel/CSV → downloads directly (no share sheet needed on web, just a file download). The export is scoped to the selected period **and** any currently applied filters.
 5. This screen is the one most likely to be used by an accountant the business owner shares access with in the future (Phase 2 multi-user).
 
 ---
@@ -78,7 +78,7 @@
 |---|---|
 | Email not yet linked to a business (no "Enable Web Access" done on mobile) | Block login with a clear explanatory message, no dashboard signup flow in MVP. |
 | Magic link expired or already used | Show "Link expired" with a "Send new link" button. |
-| New business with zero transactions | Empty state on Home/Transactions/Reports with a short message ("Add your first transaction from the mobile app") rather than a blank/broken-looking screen. |
+| New business with zero transactions | Empty state on Home/Transactions/Reports: "لا توجد معاملات بعد" with guidance "أضف أول معاملة من تطبيق الهاتف لبدء متابعة نشاطك التجاري." rather than a blank/broken-looking screen. |
 | User edits a transaction on web while mobile app is open on the same record | Not handled specially in MVP (last write wins) — flag as a Phase 2 real-time sync consideration if it becomes a real problem. |
 | Web access unlinked while user is logged in elsewhere | Session should be invalidated on next request (Supabase handles this by default via RLS + auth checks). |
 

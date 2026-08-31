@@ -43,6 +43,7 @@ This is the most-used flow in the app and should be reachable in **one tap** fro
    - Option A: Open camera → take photo of receipt.
    - Option B: Pick existing photo from gallery.
    - Option C: "Skip — enter manually" (bypasses AI entirely, goes to step 6 with empty form).
+   - After capture, an advisory image quality check runs: PASS (proceed), WARNING (borderline quality — user may continue), or REJECT (clearly unusable — prompt to retake).
 4. **Processing State** (after photo captured)
    - Loading indicator while image uploads and Gemini API extracts data.
    - Timeout/error handling: if extraction fails or takes too long → show message + button "Enter manually instead" (never a dead end).
@@ -76,13 +77,14 @@ This is the most-used flow in the app and should be reachable in **one tap** fro
 
 1. **Home Dashboard** → tap "Reports" tab (bottom navigation).
 2. **Reports Screen**
-   - Period selector: This Week / This Month / Custom Range.
+   - Period selector: This Week / This Month / Last Month / Year-to-Date / Custom Range (unified with web).
    - Summary cards: Total Income, Total Expenses, Net.
    - Category breakdown (list or simple bar chart), sorted by highest spend.
    - Comparison line vs previous period ("+15% vs last month").
 3. Tap "Export" → **Export Options Sheet**
    - Choose format: PDF or Excel/CSV.
    - Choose period (defaults to what's currently selected).
+   - Export is scoped to the selected period **and** any currently applied filters (category, type, amount range).
    - Confirm → file generated → share sheet opens (WhatsApp, email, save to device, etc.).
 
 ---
@@ -104,11 +106,11 @@ This is the most-used flow in the app and should be reachable in **one tap** fro
 
 | Situation | Expected behavior |
 |---|---|
-| No internet connection during capture | Queue locally, show "will process when back online" (or, for true MVP, simply block with a clear message — decide based on Phase 1 vs Phase 2 scope). |
+| No internet connection during capture | Out of MVP (resolved). Do not queue or process offline; show a clear message that internet access is required and allow retry. |
 | AI returns low/no confidence on all fields | Treat as extraction failure → route to manual entry, don't force user to fix garbage data. |
 | User captures a non-receipt image (e.g., a random photo) | Gemini should return an empty/near-empty result → show "Couldn't read this as a receipt, try again or enter manually." |
 | Duplicate receipt (same photo/data submitted twice) | Not required for MVP, flag as a Phase 2 nice-to-have (simple hash check on image). |
-| OTP not received | Resend button after a cooldown timer (e.g., 30s), plus a "having trouble?" support link. |
+| OTP not received | Resend button after a cooldown timer (60 seconds), plus a "having trouble?" support link. |
 | User deletes a transaction by mistake | Confirmation dialog before delete is the only safeguard in MVP (no undo/trash in Phase 1). |
 
 ---

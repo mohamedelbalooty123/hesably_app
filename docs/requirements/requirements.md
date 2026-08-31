@@ -92,7 +92,7 @@ The following are explicitly out of scope for the MVP (per `feature-list.md`):
 - Multi-currency support.
 - Direct government tax filing/submission (Phase 2 at earliest, and only after legal/compliance review).
 
-Additionally, the duplication detection feature (hash check) and offline capture during the capture flow are explicitly identified in `user-flow-mobile.md` as not required for MVP (Phase 2 nice-to-have).
+Additionally, the duplication detection feature (hash check) and offline capture during the capture flow are identified in `user-flow-mobile.md` as not required for MVP. Offline capture is resolved as **out of MVP** (Per Q-018: block capture with a clear message when offline).
 
 ---
 
@@ -127,10 +127,11 @@ The system shall display an inline error for an incorrect OTP code and allow a r
 - Source: user-flow-mobile.md — Section 1, step 3; Edge Cases (OTP not received)
 
 #### FR-AUTH-005 — OTP Resend / Support
-The system shall provide a resend option after a cooldown timer (e.g., 30s) and a "having trouble?" support link when the OTP is not received.
+The system shall provide a resend option after a cooldown timer of **60 seconds** and a "having trouble?" support link when the OTP is not received.
 
 - Classification: MVP
 - Source: user-flow-mobile.md — Edge Cases & Error States
+- Decision: Q-001 (open-questions.md) — fixes the cooldown to 60 seconds
 
 #### FR-AUTH-006 — Session Persistence
 The system shall keep the user logged in between app opens (stay logged in until explicit logout / session expiry).
@@ -169,6 +170,7 @@ The system shall set the default currency to EGP during onboarding.
 
 - Classification: MVP
 - Source: feature-list.md — Authentication (default currency (EGP))
+- Decision: Q-012 (open-questions.md) — MVP currency is EGP only; multi-currency is out of scope
 
 #### FR-ONBOARD-005 — Business Profile Creation
 Confirming the onboarding form shall create the business profile record and navigate to the Home Dashboard.
@@ -203,10 +205,17 @@ The system shall allow the user to pick an existing photo from the gallery.
 - Source: feature-list.md — Receipt Capture; user-flow-mobile.md — Section 2, step 3
 
 #### FR-CAPTURE-005 — Image Quality Check
-The system shall perform a basic image quality check before upload (blurry/too-dark warning) and offer an optional retake prompt.
+The system shall perform a basic image quality check before upload (blurry/too-dark warning) and offer an optional retake prompt. The check is advisory with three outcomes:
+
+- **PASS** — image appears usable; processing proceeds.
+- **WARNING** — borderline darkness/blur/framing; the user may continue.
+- **REJECT** — clearly unusable (extremely dark, blank, no meaningful receipt content); the user is prompted to retake.
+
+Overly aggressive thresholds must not reject potentially readable receipts.
 
 - Classification: MVP
 - Source: feature-list.md — Receipt Capture
+- Decision: Q-020 (open-questions.md) — three-outcome advisory model
 
 #### FR-CAPTURE-006 — Sales vs Purchase Support
 The system shall support capturing both sales receipts issued to customers and purchase invoices from suppliers (type selected before/after capture).
@@ -227,6 +236,7 @@ The system shall send the captured image to the Gemini Vision API for processing
 
 - Classification: MVP
 - Source: feature-list.md — AI Data Extraction; user-flow-mobile.md — Section 2, step 4
+- Decision: Q-007 (open-questions.md) — initial production model is **Gemini 3.1 Flash-Lite**; the Gemini API key stays server-side and is never exposed in Flutter
 
 #### FR-AI-002 — Extract Structured Fields
 The system shall extract structured fields from the receipt: date, total amount, vendor/customer name (if present), line items (if legible), suggested category.
@@ -239,12 +249,14 @@ The system shall return a confidence indicator per field so that low-confidence 
 
 - Classification: MVP
 - Source: feature-list.md — AI Data Extraction
+- Decision: Q-008 (open-questions.md) — a field with confidence **below 80%** is treated as low-confidence and flagged for review
 
 #### FR-AI-004 — Low-Confidence Flagging
-The system shall visually flag low-confidence fields on the Review & Edit screen (e.g., subtle highlight) prompting the user to double-check.
+The system shall visually flag low-confidence fields (<80% confidence) on the Review & Edit screen (e.g., subtle highlight) prompting the user to double-check.
 
 - Classification: MVP
 - Source: user-flow-mobile.md — Section 2, step 5
+- Decision: Q-008 (open-questions.md)
 
 #### FR-AI-005 — Extraction Failure Handling
 The system shall handle extraction failure gracefully (blurry image, non-receipt, handwritten receipt) and fall back to a manual entry form rather than a hard error.
@@ -253,10 +265,11 @@ The system shall handle extraction failure gracefully (blurry image, non-receipt
 - Source: feature-list.md — AI Data Extraction
 
 #### FR-AI-006 — Low/No Confidence Result
-If the AI returns low/no confidence on all fields, the system shall treat this as extraction failure and route to manual entry, not forcing the user to fix garbage data.
+If the AI returns low/no confidence on all fields, the system shall treat this as extraction failure and route to manual entry, not forcing the user to fix garbage data. Extraction is treated as **unsuccessful** when required information is missing **or** the overall extraction confidence is below **50%**.
 
 - Classification: MVP
 - Source: user-flow-mobile.md — Edge Cases & Error States; feature-list.md — AI Data Extraction
+- Decision: Q-008 (open-questions.md)
 
 #### FR-AI-007 — Processing Loading State
 The system shall show a loading indicator while the image uploads and Gemini extracts data, and must never show a frozen screen.
@@ -265,10 +278,11 @@ The system shall show a loading indicator while the image uploads and Gemini ext
 - Source: feature-list.md — Non-Functional (Performance); user-flow-mobile.md — Section 2, step 4
 
 #### FR-AI-008 — Processing Timeout / Manual Fallback
-If extraction fails or takes too long, the system shall show a message and a "Enter manually instead" button (never a dead end).
+If extraction fails or takes too long, the system shall show a message and a "Enter manually instead" button (never a dead end). If extraction has not produced a usable result within **15 seconds**, show the timeout message and offer manual entry.
 
 - Classification: MVP
 - Source: user-flow-mobile.md — Section 2, step 4
+- Decision: Q-009 (open-questions.md) — fixes the client-visible extraction timeout to 15 seconds
 
 #### FR-AI-009 — Non-Receipt Detection
 If the user captures a non-receipt image, the system shall show "Couldn't read this as a receipt, try again or enter manually" instead of garbage data.
@@ -323,10 +337,24 @@ The system shall support a quick manual-entry path (skip AI entirely) for cases 
 ### 5.6 Categories
 
 #### FR-CATEGORY-001 — Default Categories
-The system shall provide predefined default categories relevant to small Egyptian retail/service businesses (e.g., Purchases/Stock, Rent, Salaries, Utilities, Transport, Sales, Other).
+The system shall provide predefined default categories relevant to small Egyptian retail/service businesses. The authoritative default category list is:
+
+```text
+1. Sales
+2. Purchases / Stock
+3. Rent
+4. Salaries
+5. Utilities
+6. Transport
+7. Marketing
+8. Maintenance
+9. Taxes / Fees
+10. Other
+```
 
 - Classification: MVP
 - Source: feature-list.md — Categories
+- Decision: Q-010 (open-questions.md) — authoritative list; defaults are seeded for every business, cannot be permanently deleted, and may only be hidden
 
 #### FR-CATEGORY-002 — AI Category Suggestion
 The AI shall suggest a category automatically; the user may override it.
@@ -339,6 +367,7 @@ The system shall allow the user to add custom categories.
 
 - Classification: MVP
 - Source: feature-list.md — Categories; user-flow-mobile.md — Section 5, step 2
+- Decision: Q-021 (open-questions.md) — a custom category cannot duplicate an existing default or custom category after normalization
 
 #### FR-CATEGORY-004 — Manage Custom Categories
 The user shall be able to add, edit, and delete custom categories in Settings.
@@ -351,6 +380,7 @@ Default categories cannot be deleted; they may only be hidden.
 
 - Classification: MVP
 - Source: user-flow-mobile.md — Section 5, step 2
+- Decision: Q-010 (open-questions.md) — hidden categories remain valid for existing historical transactions, remain represented in reports and filters when historical data uses them, and do not appear in normal category selection lists
 
 ### 5.7 Transaction Management
 
@@ -401,6 +431,7 @@ The system shall allow searching transactions by vendor/customer name.
 
 - Classification: MVP
 - Source: feature-list.md — Transaction List & Management
+- Decision: Q-022 (open-questions.md) — MVP search matches only vendor/customer name; it does not include notes, categories, other fields, full-text, or OCR text
 
 #### FR-TRANS-009 — Transaction Detail View
 The system shall provide a detail view per transaction showing all fields plus the original image.
@@ -435,10 +466,11 @@ The system shall show a confirmation dialog before deleting a transaction, and s
 ### 5.8 Dashboard and Reports
 
 #### FR-DASH-001 — Home Summary
-The Home screen shall show a summary of total income, total expenses, and net for the current month as large, glanceable numbers.
+The Home screen shall show a summary of total income, total expenses, and net for the current month as large, glanceable numbers. Monetary values use the EGP display format (e.g., `1,250.50 ج.م`) with thousands separators, decimal precision where applicable, and a currency label appropriate for the Arabic UI. Display formatting is consistent across Mobile and Web; calculations always use numeric values, not formatted strings.
 
 - Classification: MVP
 - Source: feature-list.md — Dashboard & Reports
+- Decision: Q-012 (open-questions.md)
 
 #### FR-DASH-002 — Category Breakdown
 The system shall show a breakdown by category (simple bar or list, not necessarily a fancy chart in MVP).
@@ -453,10 +485,19 @@ The system shall show a month-over-month comparison (e.g., "+15% expenses vs las
 - Source: feature-list.md — Dashboard & Reports
 
 #### FR-DASH-004 — Reports Period Selector
-The system shall provide a date range / period selector: This Week / This Month / Custom Range.
+The system shall provide a unified report-period selector used across Mobile and Web:
+
+```text
+This Week
+This Month
+Last Month
+Year-to-Date
+Custom Range
+```
 
 - Classification: MVP
 - Source: feature-list.md — Dashboard & Reports; user-flow-mobile.md — Section 4, step 2
+- Decision: Q-011 (open-questions.md) — the same period options apply on Mobile and Web
 
 #### FR-DASH-005 — Reports Summary Cards
 The Reports screen shall show summary cards for Total Income, Total Expenses, and Net.
@@ -483,18 +524,32 @@ The system shall provide an Export Options sheet allowing the user to choose a f
 
 - Classification: MVP
 - Source: user-flow-mobile.md — Section 4, step 3
+- Decision: Q-014 (open-questions.md) — exports respect the selected report period **and** the currently applied filters (category, type, amount range); a filtered subset exports exactly that subset
 
 #### FR-EXPORT-002 — PDF Export
-The system shall export a report for a selected period as PDF (simple, shareable with an accountant).
+The system shall export a report for a selected period as PDF (simple, shareable with an accountant). The PDF shall contain:
+
+1. Report period
+2. Total income
+3. Total expenses
+4. Net
+5. Category breakdown
+6. Transaction list for the selected scope
 
 - Classification: MVP
 - Source: feature-list.md — Export
+- Decision: Q-013 (open-questions.md) — PDF content is optimized for human reading and accountant sharing
 
 #### FR-EXPORT-003 — Excel/CSV Export
 The system shall export a report as Excel/CSV for users who want raw data.
 
+- **Excel** contains three sheets: **Sheet 1 — Summary** (selected period, income, expenses, net, category summary), **Sheet 2 — Transactions** (detailed records), **Sheet 3 — Categories** (category totals for the exported scope).
+- **CSV** contains transaction-level data in a flat tabular structure suitable for import into other systems.
+- Amounts are formatted as EGP (e.g., `1,250.50 ج.م`); exported numeric data remains machine-readable.
+
 - Classification: MVP
 - Source: feature-list.md — Export
+- Decision: Q-012/Q-013 (open-questions.md)
 
 #### FR-EXPORT-004 — Share Sheet
 Upon confirmation, the system shall generate the file and open a share sheet (WhatsApp, email, save to device, etc.).
@@ -517,10 +572,11 @@ The Settings screen shall allow the user to manage categories (add/edit/delete c
 - Source: feature-list.md — Settings; user-flow-mobile.md — Section 5, step 2
 
 #### FR-SETTINGS-003 — Enable Web Access
-The Settings screen shall provide an "Enable Web Access" option to link an email address to the account for dashboard login. This is optional and not required to use the mobile app.
+The Settings screen shall provide an "Enable Web Access" option to link an email address to the account for dashboard login. This is optional and not required to use the mobile app. The linked email is associated with the **existing authenticated Supabase user** — no second independent account is created for the email.
 
 - Classification: MVP
 - Source: user-flow-mobile.md — Section 5, step 2
+- Decision: Q-016 (open-questions.md) — email identity maps back to the same business/account ownership
 
 #### FR-SETTINGS-004 — Language Toggle
 The Settings screen shall provide a language toggle (Arabic default / English).
@@ -625,6 +681,7 @@ The web Transactions screen shall support search by vendor/customer name.
 
 - Classification: MVP
 - Source: user-flow-dashboard.md — Section 3, step 4
+- Decision: Q-022 (open-questions.md) — matches only vendor/customer name for MVP
 
 #### FR-WEB-TRANS-004 — Web Detail Panel
 Clicking a row shall open a detail panel (side drawer or modal) showing all fields read-only by default, with a full-size receipt image viewer.
@@ -647,10 +704,19 @@ The web detail panel shall provide a "Delete" button with a confirmation dialog.
 #### 5.11.4 Reports
 
 #### FR-WEB-REPORT-001 — Web Reports Period Selector
-The web Reports screen shall provide a period selector: This Month / Last Month / Custom Range / Year-to-date.
+The web Reports screen shall provide the same unified period selector as Mobile:
+
+```text
+This Week
+This Month
+Last Month
+Year-to-Date
+Custom Range
+```
 
 - Classification: MVP
 - Source: user-flow-dashboard.md — Section 4, step 2
+- Decision: Q-011 (open-questions.md)
 
 #### FR-WEB-REPORT-002 — Web Reports Summary and Breakdown
 The web Reports screen shall show summary cards and a category breakdown using the same data model as mobile.
@@ -751,7 +817,7 @@ Source: user-flow-mobile.md — Section 3
 Source: user-flow-mobile.md — Section 4
 
 1. Home → Reports tab.
-2. Reports Screen: period selector (This Week / This Month / Custom Range); summary cards (Income, Expenses, Net); category breakdown sorted by highest spend; comparison vs previous period.
+2. Reports Screen: unified period selector (This Week / This Month / Last Month / Year-to-Date / Custom Range); summary cards (Income, Expenses, Net); category breakdown sorted by highest spend; comparison vs previous period.
 3. Tap Export → Export Options: choose PDF or Excel/CSV; choose period (default = current); Confirm → file generated → share sheet (WhatsApp, email, save, etc.).
 
 ### 6.5 Mobile — Settings Flow
@@ -790,7 +856,7 @@ Source: user-flow-dashboard.md — Section 3
 
 Source: user-flow-dashboard.md — Section 4
 
-Period selector (This Month / Last Month / Custom Range / Year-to-date); summary cards + category breakdown; Export button → PDF or Excel/CSV → direct download.
+Period selector (This Week / This Month / Last Month / Year-to-Date / Custom Range); summary cards + category breakdown; Export button → PDF or Excel/CSV → direct download, scoped to the period and current filters.
 
 ### 6.10 Web — Categories
 
@@ -812,11 +878,11 @@ Business profile (name, type) editable, syncs with mobile; Web Access (view/unli
 
 | Situation | Expected behavior | Classification |
 |---|---|---|
-| No internet connection during capture | Queue locally, show "will process when back online" (or block with a clear message — decide per Phase 1 vs Phase 2 scope) | MVP / POST-MVP decision (see open questions) |
+| No internet connection during capture | Offline capture (queue + sync) is **out of MVP**. On no network: do not queue processing, show a clear message that internet access is required, and allow retry. | MVP (resolved per Q-018) |
 | AI returns low/no confidence on all fields | Treat as extraction failure → route to manual entry | MVP |
 | User captures a non-receipt image | Gemini returns empty/near-empty → "Couldn't read this as a receipt, try again or enter manually" | MVP |
 | Duplicate receipt (same photo/data twice) | Not required for MVP — Phase 2 nice-to-have (simple hash check) | POST-MVP |
-| OTP not received | Resend after cooldown (e.g., 30s) + "having trouble?" support link | MVP |
+| OTP not received | Resend after cooldown (60 seconds) + "having trouble?" support link | MVP |
 | User deletes transaction by mistake | Confirmation dialog before delete only (no undo/trash in Phase 1) | MVP |
 | Wrong OTP code | Inline error, allow resend after cooldown | MVP |
 
@@ -826,7 +892,7 @@ Business profile (name, type) editable, syncs with mobile; Web Access (view/unli
 |---|---|---|
 | Email not yet linked to a business | Block login with clear explanatory message; no dashboard signup in MVP | MVP |
 | Magic link expired/used | "Link expired" + "Send new link" button | MVP |
-| New business with zero transactions | Empty state on Home/Transactions/Reports with message ("Add your first transaction from the mobile app") | MVP |
+| New business with zero transactions | Empty state on Home/Transactions/Reports with an Arabic message (see Q-019 copy) rather than a blank/broken-looking screen | MVP |
 | User edits on web while mobile open on same record | Not handled specially in MVP (last write wins); Phase 2 real-time sync consideration | POST-MVP |
 | Web access unlinked while user logged in elsewhere | Session invalidated on next request (Supabase via RLS + auth checks) | MVP |
 

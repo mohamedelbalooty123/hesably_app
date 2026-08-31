@@ -189,10 +189,10 @@ The selected photo is used for processing.
 A user is about to upload a receipt image.
 
 **When:**
-The image appears blurry or too dark.
+The image is clearly unusable (extremely dark, blank, or with no meaningful receipt content).
 
 **Then:**
-A quality warning is shown with an optional retake prompt.
+A REJECT outcome is returned, prompting the user to retake the image. Borderline images produce a WARNING that allows the user to continue; acceptable images PASS without prompt.
 
 ### AC-CAPTURE-006 — Manual Entry Without Photo
 **Requirement:** FR-CAPTURE-007, FR-REVIEW-007
@@ -226,13 +226,13 @@ The system displays the extracted fields (date, total amount, vendor/customer, l
 **Requirement:** FR-AI-003, FR-AI-004
 
 **Given:**
-The AI returns low confidence for one or more fields.
+The AI returns confidence below 80% for one or more fields.
 
 **When:**
 The Review & Edit screen is shown.
 
 **Then:**
-The low-confidence fields are visually flagged (e.g., subtle highlight) prompting the user to double-check them.
+The low-confidence fields are visually flagged (e.g., subtle highlight) prompting the user to double-check them; all fields remain editable.
 
 ### AC-AI-003 — Extraction Shows Loading State
 **Requirement:** FR-AI-007, NFR-PERF-001
@@ -253,7 +253,7 @@ A clear loading indicator is shown and the screen is never frozen.
 AI extraction fails or takes too long.
 
 **When:**
-The processing state ends in failure or timeout.
+The processing state ends in failure or does not produce a usable result within 15 seconds.
 
 **Then:**
 A message is shown with an "Enter manually instead" button (never a dead end).
@@ -274,10 +274,10 @@ A message is shown: "Couldn't read this as a receipt, try again or enter manuall
 **Requirement:** FR-AI-006, FR-AI-005
 
 **Given:**
-The AI returns low/no confidence on all fields.
+The AI returns low/no confidence on all fields or missing required information.
 
 **When:**
-The result is reported.
+The overall extraction confidence is below 50% or required information is missing.
 
 **Then:**
 It is treated as extraction failure and the user is routed to manual entry, not forced to fix garbage data.
@@ -360,7 +360,7 @@ A new business is set up.
 The user opens the category list.
 
 **Then:**
-Predefined default categories (e.g., Purchases/Stock, Rent, Salaries, Utilities, Transport, Sales, Other) are available.
+The authoritative default categories are available (Sales, Purchases/Stock, Rent, Salaries, Utilities, Transport, Marketing, Maintenance, Taxes/Fees, Other).
 
 ### AC-CATEGORY-002 — Add Custom Category
 **Requirement:** FR-CATEGORY-003
@@ -572,7 +572,7 @@ A user is on the Reports screen.
 They open the period selector.
 
 **Then:**
-They can choose This Week / This Month / Custom Range.
+They can choose from the unified set: This Week / This Month / Last Month / Year-to-Date / Custom Range.
 
 ### AC-DASH-005 — Reports Summary Cards
 **Requirement:** FR-DASH-005
@@ -624,7 +624,7 @@ A user taps "Export" on the Reports screen.
 The Export Options sheet opens.
 
 **Then:**
-They can choose a format (PDF or Excel/CSV) and the period defaults to the currently selected one.
+They can choose a format (PDF or Excel/CSV) and the period defaults to the currently selected one; the export is scoped to the selected period **and** any currently applied filters (category, type, amount range).
 
 ### AC-EXPORT-002 — PDF Export
 **Requirement:** FR-EXPORT-002
@@ -636,7 +636,7 @@ A user selects PDF format for a period.
 They confirm the export.
 
 **Then:**
-A PDF report is generated for that period.
+A PDF report is generated for that period containing the report period, total income, total expenses, net, category breakdown, and transaction list for the selected scope.
 
 ### AC-EXPORT-003 — Excel/CSV Export
 **Requirement:** FR-EXPORT-003
@@ -648,7 +648,7 @@ A user selects Excel/CSV format for a period.
 They confirm the export.
 
 **Then:**
-An Excel/CSV file with the raw data is generated.
+An Excel/CSV file with the raw data is generated (Excel: Summary, Transactions, and Categories sheets; CSV: flat transaction-level data).
 
 ### AC-EXPORT-004 — Share Sheet Opens
 **Requirement:** FR-EXPORT-004
@@ -944,7 +944,7 @@ A user is on the web Reports screen.
 They open the period selector.
 
 **Then:**
-They can choose This Month / Last Month / Custom Range / Year-to-date.
+They can choose from the unified set shared with mobile: This Week / This Month / Last Month / Year-to-Date / Custom Range.
 
 ### AC-WEB-REPORT-002 — Web Reports Summary and Breakdown
 **Requirement:** FR-WEB-REPORT-002
@@ -1049,10 +1049,10 @@ They are logged out of the dashboard.
 A business has zero transactions.
 
 **When:**
-The user opens Home, Transactions, or Reports on the web.
+The user opens Home, Transactions, or Reports.
 
 **Then:**
-An empty state with a short message (e.g., "Add your first transaction from the mobile app") is shown rather than a blank/broken screen.
+An empty state is shown that explains the absence and offers a next action, rather than a blank/broken screen. Web empty state uses the Q-019 copy: "لا توجد معاملات بعد" with guidance "أضف أول معاملة من تطبيق الهاتف لبدء متابعة نشاطك التجاري."
 
 ---
 

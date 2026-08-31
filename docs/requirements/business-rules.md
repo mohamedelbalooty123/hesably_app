@@ -19,9 +19,10 @@ Account access requires verification via a 6-digit OTP code sent to the user's p
 - Related: FR-AUTH-003
 
 ### BR-AUTH-003 — OTP Resend Cooldown
-A resend of the OTP is allowed only after a cooldown timer (e.g., 30s).
+A resend of the OTP is allowed only after a cooldown timer of **60 seconds**. The resend button is disabled (with a visible countdown) during the cooldown and becomes available afterwards.
 
 - Source: user-flow-mobile.md — Section 1, step 3; Edge Cases
+- Decision: Q-001 (open-questions.md)
 - Related: FR-AUTH-004, FR-AUTH-005
 
 ### BR-AUTH-004 — Session Persistence
@@ -98,6 +99,13 @@ Concurrent edits on web and mobile for the same record are not specially handled
 - Source: user-flow-dashboard.md — Edge Cases & Error States
 - Classification: POST-MVP (for the sync behavior); MVP behavior is last-write-wins
 
+### BR-TRANS-007 — Search Scope (Vendor/Customer Name Only)
+MVP transaction search matches only the vendor/customer name. It does not include notes, categories, other transaction fields, full-text search, or OCR text.
+
+- Source: feature-list.md — Transaction List & Management; user-flow-mobile.md — Section 3, step 2; user-flow-dashboard.md — Section 3, step 4
+- Decision: Q-022 (open-questions.md)
+- Related: FR-TRANS-008, FR-WEB-TRANS-003
+
 ---
 
 ## 4. Receipt Rules
@@ -126,6 +134,19 @@ Receipt images are stored in a private (non-public) storage bucket.
 - Source: feature-list.md — Non-Functional (Security)
 - Related: NFR-SEC-002
 
+### BR-REC-005 — Image Quality Check Outcomes
+The pre-upload image quality check is advisory, with three outcomes:
+
+- **PASS** — image appears usable; processing proceeds.
+- **WARNING** — borderline quality (darkness, blur, framing); the user may continue.
+- **REJECT** — clearly unusable (extremely dark, blank, no meaningful receipt content); the user is prompted to retake.
+
+The check is not a strict guarantee and must not reject potentially readable receipts.
+
+- Source: feature-list.md — Receipt Capture
+- Decision: Q-020 (open-questions.md)
+- Related: FR-CAPTURE-005
+
 ---
 
 ## 5. AI Extraction Rules
@@ -137,15 +158,17 @@ AI-extracted data is never saved to the database without user confirmation; ther
 - Related: FR-REVIEW-002, NFR-DATA-001
 
 ### BR-AI-002 — Confidence Flagging
-Extraction returns a confidence indicator per field; low-confidence fields are visually flagged for user review.
+Extraction returns a confidence indicator per field; low-confidence fields are visually flagged for user review. A field with confidence **below 80%** is flagged for review. A field with incorrect or missing data can still be edited by the user.
 
 - Source: feature-list.md — AI Data Extraction; user-flow-mobile.md — Section 2, step 5
+- Decision: Q-008 (open-questions.md)
 - Related: FR-AI-003, FR-AI-004
 
 ### BR-AI-003 — Extraction Failure Falls Back to Manual Entry
-If extraction fails (blurry, non-receipt, handwritten) or returns low/no confidence overall, the system routes to manual entry rather than presenting a hard error or forcing garbage data to be fixed.
+If extraction fails (blurry, non-receipt, handwritten) or returns low/no confidence overall, the system routes to manual entry rather than presenting a hard error or forcing garbage data to be fixed. Extraction is treated as **unsuccessful** when required information is missing **or** the overall extraction confidence is below **50%**. If extraction has not produced a usable result within **15 seconds**, the timeout path is shown with manual-entry offered.
 
 - Source: feature-list.md — AI Data Extraction; user-flow-mobile.md — Section 2, step 4; Edge Cases
+- Decision: Q-008, Q-009 (open-questions.md)
 - Related: FR-AI-005, FR-AI-006, FR-AI-008, FR-AI-009
 
 ### BR-AI-004 — Manual Path to Bypass AI
@@ -153,6 +176,13 @@ The user can choose to bypass AI and enter the transaction manually ("Skip — e
 
 - Source: user-flow-mobile.md — Section 2, step 3 (Option C)
 - Related: FR-CAPTURE-007, FR-REVIEW-007
+
+### BR-AI-005 — Gemini Model and Server-Side Access
+Receipt/invoice extraction uses the Gemini Vision API (initial production model: **Gemini 3.1 Flash-Lite**). The Gemini API key is accessed only through a server-side AI processing boundary and is never embedded in the Flutter app or otherwise exposed client-side.
+
+- Source: feature-list.md — AI Data Extraction
+- Decision: Q-007 (open-questions.md)
+- Related: FR-AI-001
 
 ---
 
@@ -169,9 +199,10 @@ A transaction is written to the database only after the user confirms/saves it f
 ## 7. Category Rules
 
 ### BR-CATEGORY-001 — Default Categories Exist
-Predefined default categories are provided, relevant to small Egyptian retail/service businesses (e.g., Purchases/Stock, Rent, Salaries, Utilities, Transport, Sales, Other).
+Predefined default categories are provided, relevant to small Egyptian retail/service businesses. The authoritative default list is: Sales, Purchases/Stock, Rent, Salaries, Utilities, Transport, Marketing, Maintenance, Taxes/Fees, Other.
 
 - Source: feature-list.md — Categories
+- Decision: Q-010 (open-questions.md)
 - Related: FR-CATEGORY-001
 
 ### BR-CATEGORY-002 — AI Category Suggestion
@@ -189,7 +220,14 @@ Users can add custom categories.
 ### BR-CATEGORY-004 — Default Categories Cannot Be Deleted
 Default categories cannot be deleted; they can only be hidden.
 
+Hidden default categories:
+- remain valid for existing historical transactions;
+- stay available when displaying historical transactions;
+- remain represented in reports and filters where historical data uses them;
+- do not appear in normal category selection lists.
+
 - Source: user-flow-mobile.md — Section 5, step 2; user-flow-dashboard.md — Section 5, step 4
+- Decision: Q-010 (open-questions.md)
 - Related: FR-CATEGORY-005, FR-WEB-CATEGORY-003
 
 ### BR-CATEGORY-005 — Custom Categories Editable/Deletable
@@ -199,9 +237,10 @@ Custom categories can be added, edited, and deleted (in both mobile Settings and
 - Related: FR-CATEGORY-004, FR-WEB-CATEGORY-002
 
 ### BR-CATEGORY-006 — Shared Category Table
-Web and mobile categories are managed against the same underlying table and rules (mirror behavior).
+Web and mobile categories are managed against the same underlying table and rules (mirror behavior). Categories are shared across platforms, and default categories are identifiable separately from custom categories. Category behavior is consistent between Mobile and Web.
 
 - Source: user-flow-dashboard.md — Section 5, step 3
+- Decision: Q-021 (open-questions.md)
 - Related: FR-WEB-CATEGORY-002
 
 ### BR-CATEGORY-007 — Category Usage Count (Web)
@@ -209,6 +248,13 @@ The web Categories view shows a usage count (how many transactions use each cate
 
 - Source: user-flow-dashboard.md — Section 5, step 2
 - Related: FR-WEB-CATEGORY-001
+
+### BR-CATEGORY-008 — No Duplicate Custom Category
+A custom category cannot duplicate an existing default or custom category after normalization.
+
+- Source: Q-021 (open-questions.md)
+- Decision: Q-021 (open-questions.md)
+- Related: FR-CATEGORY-003, FR-WEB-CATEGORY-002
 
 ---
 
@@ -226,20 +272,47 @@ The web reports use the same data model as mobile (summary cards + category brea
 - Source: user-flow-dashboard.md — Section 4, step 3
 - Related: FR-WEB-REPORT-002
 
+### BR-REPORT-003 — Unified Report Periods
+The same report-period options apply on Mobile and Web: This Week, This Month, Last Month, Year-to-Date, and Custom Range.
+
+- Source: Q-011 (open-questions.md)
+- Decision: Q-011 (open-questions.md)
+- Related: FR-DASH-004, FR-WEB-REPORT-001
+
+### BR-REPORT-004 — EGP Display Format
+Displayed monetary values use human-readable EGP formatting (thousands separators, decimal precision where applicable, and a currency label/symbol appropriate for the Arabic UI, e.g., `1,250.50 ج.م`). Financial calculations use numeric values, not formatted strings, and display formatting is consistent across Mobile and Web.
+
+- Source: Q-012 (open-questions.md)
+- Decision: Q-012 (open-questions.md)
+- Related: FR-DASH-001, FR-WEB-DASH-002
+
 ---
 
 ## 9. Export Rules
 
-### BR-EXPORT-001 — Export Default Period
-The export period defaults to the period currently selected on the Reports screen.
+### BR-EXPORT-001 — Export Scope (Period + Filters)
+The export period defaults to the period currently selected on the Reports screen, and the export respects the currently applied filters (category, type, amount range) as well. A filtered subset exports exactly that subset.
 
 - Source: user-flow-mobile.md — Section 4, step 3
+- Decision: Q-014 (open-questions.md)
 - Related: FR-EXPORT-001
 
 ### BR-EXPORT-002 — Export Formats
 Exports are available as PDF (shareable with an accountant) and Excel/CSV (raw data).
 
+- PDF contains: report period, total income, total expenses, net, category breakdown, and transaction list for the selected scope.
+- Excel contains three sheets: Summary (period, income, expenses, net, category summary), Transactions (detailed records), and Categories (category totals).
+- CSV contains transaction-level data in a flat tabular structure.
+
 - Source: feature-list.md — Export
+- Decision: Q-013 (open-questions.md)
+- Related: FR-EXPORT-002, FR-EXPORT-003
+
+### BR-EXPORT-003 — Currency Formatting in Exports
+Monetary values in exports are formatted as EGP (e.g., `1,250.50 ج.م`); exported numeric data remains machine-readable where appropriate.
+
+- Source: Q-012 (open-questions.md)
+- Decision: Q-012 (open-questions.md)
 - Related: FR-EXPORT-002, FR-EXPORT-003
 
 ---
@@ -253,9 +326,10 @@ Web access does not provide self-signup in MVP; the mobile app is the source of 
 - Related: FR-WEB-AUTH-002
 
 ### BR-WEB-002 — Web Access Requires Email Linking from Mobile
-To use the web dashboard, the business owner must enable web access from the mobile app (Settings → "Enable Web Access"), which links an email identity to the existing Supabase user.
+To use the web dashboard, the business owner must enable web access from the mobile app (Settings → "Enable Web Access"), which links an email identity to the **existing Supabase user**. No second independent account is created for the email; the web identity maps back to the same business/account ownership.
 
 - Source: user-flow-mobile.md — Section 5, step 2; user-flow-dashboard.md — Section 5 assumption
+- Decision: Q-016 (open-questions.md)
 - Related: FR-SETTINGS-003, FR-WEB-AUTH-002
 
 ### BR-WEB-003 — Unlinked Email Blocks Web Login
@@ -277,9 +351,10 @@ Receipt capture (camera + AI extraction) remains mobile-only for the MVP; the da
 - Related: FR-CAPTURE-003 (mobile-only binding)
 
 ### BR-WEB-006 — Web Access Unlink Invalidates Session
-If web access is unlinked while the user is logged in elsewhere, the session is invalidated on the next request (handled by Supabase via RLS + auth checks).
+If web access is unlinked while the user is logged in elsewhere, existing web access becomes invalid. On the next authenticated request, dashboard access is rejected, the user is returned to the login/access-disabled state, and is informed that Web Access must be re-enabled from the Mobile App. No real-time disconnect mechanism is required in MVP.
 
 - Source: user-flow-dashboard.md — Edge Cases & Error States
+- Decision: Q-015 (open-questions.md)
 
 ---
 
@@ -318,11 +393,12 @@ Duplicate receipt detection (hash check on image) is not required for MVP; it is
 - Source: user-flow-mobile.md — Edge Cases & Error States
 - Classification: POST-MVP
 
-### BR-MVP-004 — Online/Offline Capture Decision Pending
-Unified-queue offline capture during the capture flow is a decision between Phase 1 and Phase 2 scope; the MVP may simply block capture offline with a clear message.
+### BR-MVP-004 — Offline Capture Out of MVP
+Offline receipt capture (queue + sync) is **out of the MVP** (resolved per Q-018). When there is no network connection, the MVP does not queue receipt processing and does not create an offline transaction pipeline; instead it shows a clear message that internet access is required and allows the user to retry. Offline capture + synchronization may be introduced in Phase 2.
 
 - Source: user-flow-mobile.md — Edge Cases & Error States
-- See open questions
+- Decision: Q-018 (open-questions.md)
+- Classification: MVP (behavior); POST-MVP (offline feature)
 
 ### BR-MVP-005 — Web Manual "Add Transaction" Not Required in MVP
 A web "Add Transaction" button for manual desktop entry is optional and not required for MVP; it can be deferred to Phase 2.
