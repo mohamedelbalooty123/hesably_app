@@ -1,0 +1,30 @@
+# Flutter/Dart
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+*.iml
+*.lock.tmp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.local
+*.pem
+
+# Supabase local
+supabase/.temp/
+
+# Node (dashboard - future)
+node_modules/
+.next/
