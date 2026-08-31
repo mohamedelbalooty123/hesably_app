@@ -9,7 +9,7 @@
 ## Phase 1 — MVP (build first, in this order)
 
 ### 1. Authentication
-- Phone number sign-up/login with OTP verification (Supabase Phone Auth + SMS provider).
+- Phone number sign-up/login with OTP verification (Supabase Phone Auth + Twilio SMS provider).
 - No email/password option in MVP — phone-only, to minimize friction for non-tech-savvy users.
 - On first login: short onboarding — business name, business type (retail / restaurant / pharmacy / service / other), default currency (EGP).
 - Session persistence (stay logged in between app opens).
@@ -32,7 +32,7 @@
 - Quick manual-entry path (skip AI entirely) for cases where a receipt isn't available (e.g., cash sale with no printed receipt).
 
 ### 5. Categories
-- Predefined default categories relevant to small Egyptian retail/service businesses (e.g., Purchases/Stock, Rent, Salaries, Utilities, Transport, Sales, Other).
+- Predefined default categories relevant to small Egyptian retail/service businesses: Sales, Purchases/Stock, Rent, Salaries, Utilities, Transport, Marketing, Maintenance, Taxes/Fees, Other.
 - AI suggests a category automatically; user can override.
 - Ability to add custom categories.
 
