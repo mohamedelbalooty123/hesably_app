@@ -197,8 +197,9 @@ Also see: `schema.md` §1 — full column table.
 Uniqueness: `UNIQUE (business_id, name_key)`; `UNIQUE (id, business_id)` (FK target).
 
 Notes:
-- Default categories are seeded per business by `seed_default_categories_for_business()` (AFTER INSERT trigger on `businesses`; `SECURITY DEFINER`, `search_path` pinned). Clients can only INSERT `type='custom'` (RLS `WITH CHECK`).
-- Default categories are **immutable in identity**: a guard trigger rejects changes to `name`, `name_key`, `business_id`, and `type` for any category; `is_hidden` remains editable. Defaults are **undeletable** (RLS DELETE requires `type='custom'`).
+- Default categories are seeded per business by `seed_default_categories_for_business()` (AFTER INSERT trigger on `businesses`; `SECURITY DEFINER`, `search_path` pinned). **EXECUTE is revoked from `public`/`anon`/`authenticated`** so the seeder is reachable only through the trigger path (HIGH-02). Clients can only INSERT `type='custom'` (RLS `WITH CHECK`).
+- **Default** categories are immutable in identity: a guard trigger rejects changes to `name`, `name_key`, `business_id`, and `type` **for `type='default'` rows**; `is_hidden` remains editable. Defaults are **undeletable** (RLS DELETE requires `type='custom'`).
+- **Custom** categories are editable: `name`/`name_key` changes are allowed (FR-CATEGORY-004 / BR-CATEGORY-005). The guard trigger rejects `business_id`/`type` changes on **all** rows (no cross-business move, no default/custom conversion). Custom rows are deletable when unused.
 - Deleting a custom category that is referenced by a transaction is blocked by the FK `RESTRICT`. This is documented as an assumption (see §Appendix — Risks & Assumptions).
 
 Seed list (authoritative — `business-rules.md` BR): `مبيعات` (Sales), `مشتريات` (Purchases/Stock), `إيجار` (Rent), `مرتبات` (Salaries), `فواتير` (Utilities), `نقل` (Transport), `تسويق` (Marketing), `صيانة` (Maintenance), `ضرائب ورسوم` (Taxes/Fees), `أخرى` (Other).
@@ -306,7 +307,8 @@ Composite same-tenant FKs guarantee a child can never reference a row from anoth
 
 Integrity rules also include CHECKs (amounts > 0, size caps, enum domains, currency pin) and triggers:
 - `set_updated_at()` — on `businesses`, `categories`, `transactions`, `transaction_items`.
-- `categories_guard_default_immutable()` — rejects identity changes to default categories.
+- `categories_guard_default_immutable()` — rejects `business_id`/`type` changes on all categories; rejects `name`/`name_key` changes **only on `type='default'`** categories (custom rename allowed; HIGH-01 correction).
+- `transactions_ai_provenance_guard()` — rejects `entry_source='ai'` transactions without a matching `ai_extractions` row (MEDIUM-01).
 
 ---
 
@@ -378,13 +380,13 @@ Ordered, additive, idempotent migrations (SQL not produced here; see `migration-
 |---|---|---|
 | 001 | `extensions` | enable `pg_trgm` |
 | 002 | `businesses` | table + constraints |
-| 003 | `categories` | table + constraints + immutability guard trigger |
+| 003 | `categories` | table + constraints + immutability guard trigger (`business_id`/`type` blocked for all; `name`/`name_key` blocked for `default` only) |
 | 004 | `transactions` | table + constraints + FK to categories |
 | 005 | `transaction_items` | table + constraints + FK |
 | 006 | `receipts` | table + constraints + FK |
 | 007 | `ai_extractions` | table + constraints + FK |
 | 008 | `updated_at_timestamps` | `set_updated_at()` + triggers |
-| 009 | `seed_default_categories` | `SECURITY DEFINER` seeder + AFTER INSERT trigger |
+| 009 | `seed_default_categories` | `SECURITY DEFINER` seeder (EXECUTE revoked from public/anon/authenticated) + AFTER INSERT trigger + `transactions_ai_provenance_guard()` |
 | 010 | `indexes` | composite business indexes, trgm GIN, partial unique web_email |
 | 011 | `rls` | `current_business_id()` helper, enable RLS, grants, per-table policies |
 | 012 | `storage` | bucket `receipts`, policies, path convention |

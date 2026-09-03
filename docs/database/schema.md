@@ -24,6 +24,7 @@ Design-stage reference. **No SQL is generated in this deliverable; tables below 
 Notes:
 - Exactly one business per owner (UNIQUE `owner_id`). Owner deletion cascades the whole tenant (ADR-DB-005).
 - `web_email` is a portal gate only (Q-015). It participates in **no** RLS checks and grants no DB authorization.
+- **Web-access unlink lifecycle (MEDIUM-02):** unlinking web access MUST set `web_access_enabled = false` **and** `web_email = NULL`, releasing the global partial-UNIQUE email reservation so the same email can be re-linked later.
 
 ---
 
@@ -47,8 +48,9 @@ Table-level:
 Behavior notes:
 - Seeded per business (AFTER INSERT on `businesses`) by `seed_default_categories_for_business()` — migration `009`.
 - Clients may INSERT only `type='custom'` (RLS `WITH CHECK`).
-- Defaults: cannot be renamed (guard trigger), cannot be deleted (RLS DELETE policy). Custom: deletable if unused (FK `RESTRICT` blocks in-use).
-- `is_hidden` is editable on both types.
+- **Default** categories: cannot be renamed, cannot be re-typed, cannot be moved between businesses (guard trigger), cannot be deleted (RLS DELETE policy). Defaults **can** be hidden.
+- **Custom** categories: `name`/`name_key` are editable (FR-CATEGORY-004 / BR-CATEGORY-005 — custom categories can be renamed); deletable if unused (FK `RESTRICT` blocks in-use).
+- Guard trigger `categories_guard_default_immutable()` (migration `003`): rejects `business_id` and `type` changes on **all** categories (no cross-business move, no default/custom conversion); rejects `name`/`name_key` changes **only on `type='default'`** categories. `is_hidden` is editable on both types.
 
 ---
 
@@ -62,7 +64,7 @@ Behavior notes:
 | `type` | `text` | no | — | `CHECK (type IN ('income','expense'))` |
 | `amount` | `numeric(14,2)` | no | — | `CHECK (amount > 0)` |
 | `transaction_date` | `date` | no | — | business-local date (no tz) |
-| `party_name` | `text` | yes | — | free text (supplier/customer) |
+| `party_name` | `text` | yes | — | free text (supplier/customer); `CHECK (party_name IS NULL OR length(trim(party_name)) BETWEEN 1 AND 255)` |
 | `entry_source` | `text` | no | — | `CHECK (entry_source IN ('manual','ai'))` |
 | `created_at` | `timestamptz` | no | `now()` | — |
 | `updated_at` | `timestamptz` | no | `now()` | set by trigger |
@@ -72,8 +74,8 @@ Table-level:
 
 Notes:
 - `category_id` is required, so deleting an in-use category is impossible (RESTRICT).
-- AI entries are written only after user confirmation; `entry_source='ai'` must be accompanied (in the same client call) by an `ai_extractions` row.
-- `party_name` search uses a trigram index on `lower(party_name)`.
+- AI entries are written only after user confirmation; `entry_source='ai'` must be accompanied by an `ai_extractions` provenance row. A `BEFORE INSERT OR UPDATE` trigger `transactions_ai_provenance_guard` (migration `009`) enforces that an `entry_source='ai'` transaction has a matching `ai_extractions` record, so AI-originated transactions cannot silently exist without provenance (MEDIUM-01). Manual entries are unaffected.
+- `party_name` search uses a trigram index on `lower(party_name)`. `party_name` is nullable and bounded: `CHECK (party_name IS NULL OR length(trim(party_name)) BETWEEN 1 AND 255)` (LOW-03).
 
 ---
 
@@ -140,8 +142,9 @@ Behavior notes:
 |---|---|---|---|
 | `current_business_id()` | `TABLE/returns uuid` | SECURITY INVOKER, STABLE | `SELECT id FROM businesses WHERE owner_id = auth.uid()`; backbones all RLS policies |
 | `set_updated_at()` | trigger | SECURITY INVOKER | sets `updated_at = now()` on `businesses`, `categories`, `transactions`, `transaction_items` |
-| `categories_guard_default_immutable()` | trigger | SECURITY INVOKER | rejects identity changes (`name`,`name_key`,`type`,`business_id`) on any category row |
-| `seed_default_categories_for_business()` | function | **SECURITY DEFINER** (owned by `postgres`, `search_path` pinned) | inserts default categories for a newly created business; fired by AFTER INSERT trigger |
+| `categories_guard_default_immutable()` | trigger | SECURITY INVOKER | rejects `business_id`/`type` changes on all categories; rejects `name`/`name_key` changes **only on `type='default'`** categories (custom rename allowed) |
+| `transactions_ai_provenance_guard()` | trigger | SECURITY INVOKER | `BEFORE INSERT OR UPDATE` — rejects `entry_source='ai'` for a transaction that has no matching `ai_extractions` row (MEDIUM-01) |
+| `seed_default_categories_for_business()` | function | **SECURITY DEFINER** (owned by `postgres`, `search_path` pinned) | inserts default categories for a newly created business; fired by AFTER INSERT trigger. **`REVOKE EXECUTE` from `public`/`anon`/`authenticated`** — reachable only through the trigger path (HIGH-02) |
 
 ---
 

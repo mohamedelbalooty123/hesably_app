@@ -11,16 +11,17 @@ Categories classify income/expense transactions and are required on every transa
 1. **`categories` table**: `name`, `name_key` (normalized: trim + lower + NFC), `type TEXT CHECK IN ('default','custom') DEFAULT 'custom'`, `is_hidden boolean DEFAULT false`, `UNIQUE(business_id, name_key)`, `UNIQUE(id, business_id)` (FK target).
 2. **Seeding is an AFTER INSERT trigger on `businesses`** → `seed_default_categories_for_business()`, a **narrow `SECURITY DEFINER`** function (owned by `postgres`, `search_path` pinned, parameterized with the new `business_id`, inserts only `type='default'` rows).
 3. **Clients can only create `custom` rows**: RLS INSERT `WITH CHECK (business_id = current_business_id() AND type = 'custom')`.
-4. **Default identity is immutable**: `categories_guard_default_immutable()` BEFORE UPDATE trigger rejects changing `name`, `name_key`, `type`, `business_id` for any row (identity is tenant+name+type); `is_hidden` stays editable.
+4. **Default identity is immutable; custom identity is editable**: `categories_guard_default_immutable()` BEFORE UPDATE trigger rejects changing `business_id` and `type` for **all** rows (no cross-business move, no default/custom conversion), and rejects changing `name`/`name_key` **only for `type='default'`** rows. Custom categories **can** be renamed (`name`/`name_key`) per FR-CATEGORY-004 / BR-CATEGORY-005. `is_hidden` stays editable on both types. *(Amended 2026-08-31 — HIGH-01: the original guard blocked renaming custom categories, which would have broken the custom-category edit workflow.)*
 5. **Defaults cannot be deleted**: RLS DELETE requires `business_id = current_business_id() AND type = 'custom'`.
 6. **In-use custom categories cannot be deleted**: composite FK `transactions(category_id, business_id) → categories(id, business_id) ON DELETE RESTRICT`. The app surfaces a friendly error (assumption A1).
 7. **Default seed list** is the authoritative 10 (`business-rules.md`): Sales, Purchases/Stock, Rent, Salaries, Utilities, Transport, Marketing, Maintenance, Taxes/Fees, Other — with drafted Arabic labels (مبيعات، مشتريات، إيجار، مرتبات، فواتير، نقل، تسويق، صيانة، ضرائب ورسوم، أخرى). The set is fixed by the rule; Arabic labels are UI copy only (assumption A3 closed).
+8. **Seeder is trigger-only**: `seed_default_categories_for_business()` **`REVOKE EXECUTE` from `public`, `anon`, `authenticated`** — reachable only through the AFTER INSERT trigger path (runs as `postgres`). *(Amended 2026-08-31 — HIGH-02: Postgres grants EXECUTE to PUBLIC by default; without the revoke an `authenticated` client could invoke the SECURITY DEFINER seeder via the Data API and insert default categories into another tenant's business.)*
 
 ## Consequences
 
 - Defaults exist the instant a business is created — no client-side provisioning race.
-- `SECURITY DEFINER` surface area is minimal (single function, single purpose, owned by the DB superuser, `search_path` pinned), and the RLS INSERT guard means even a leaked privilege can't create `default` rows from a client.
-- Hiding defaults works; renaming/type-conversion of **any** category is refused by the trigger (a deliberate guard — a custom can simply be deleted & recreated).
+- `SECURITY DEFINER` surface area is minimal (single function, single purpose, owned by the DB superuser, `search_path` pinned) and **not client-callable** (EXECUTE revoked), so even a pathological Data API call cannot invoke the seeder; the RLS INSERT guard additionally prevents clients from creating `default` rows.
+- Hiding defaults works. Renaming a default and type-converting/moving **any** category are refused by the trigger; renaming a **custom** category works (customs are otherwise deleted & recreated).
 - Deleting a used category is impossible at the DB level — safe for historical transactions.
 
 ## Alternatives considered
