@@ -51,6 +51,7 @@ Home FAB
               PASS → proceed | WARNING (borderline) → optional continue | REJECT → retake guidance (FR-CAPTURE-005, Q-020)
         • gallery → photo picked → same checks
         • "إدخال يدوي" (Enter manually) → skip AI → SCR-10 empty form (FR-CAPTURE-007)
+        • OFFLINE (Q-018 flipped, ADR-007) → save locally as pending capture → Pending list ("waiting for connection"); sync now / auto-on-reconnect
   → (if photo) AI Processing state (in-flow) → 15s visible ceiling (Q-009)
         • success           → SCR-10 pre-filled; <80% fields flagged (Q-008)
         • structured failure → inline message + "Enter manually instead" (FR-AI-005/006)
@@ -58,6 +59,7 @@ Home FAB
         • non-receipt        → "Couldn't read this as a receipt…" + retry / manual (FR-AI-009)
   → SCR-10 Review & Save:
         • Save → confirm-then-persist (row → image → receipt) → success toast → back to Home, refreshed
+        • Save while offline → deferred as pending capture (device-local), restored on reconnect
         • Back with unsaved edits → OVR-07 discard confirmation
 ```
 

@@ -132,12 +132,14 @@
 
 ---
 
-## J13 — No-internet moment outside the capture flow
+## J13 — No-internet moment (offline capture & deferred sync)
 
-1. User opens the app offline from an area with no cached state → Home shows graceful offline banner; cached summary still visible if available (offline capture remains out of scope, Q-018).
-2. Tapping capture → clear "يلزم اتصال بالإنترنت" message + retry (offline is not a dead end for *stored* data; capture itself is blocked by design).
+1. User opens the app offline from an area with no cached state → Home shows graceful offline banner; cached summary still visible if available (read-only, never implying cloud sync).
+2. Tapping capture → **capture works locally**: receipt photo + type + optional metadata saved on-device as a **pending capture** ("waiting for connection"); no dead end (Q-018 flipped, ADR-007, FR-OFFLINE-001..004).
+3. Pending list shows every pending capture with status; "Sync now" manual retry plus automatic sync on reconnect.
+4. Back online: pending capture uploads → **AI extraction (online-only)** → **user review/confirm** → saved. AI output is never saved without confirmation (NFR-DATA-001, FR-OFFLINE-008).
 
-**Goal:** G3 | **Anchor:** AC-MISC (offline), Q-018.
+**Goal:** G3 | **Anchor:** AC-OFFLINE-001…007, Q-018 (flipped).
 
 ---
 

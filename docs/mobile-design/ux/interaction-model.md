@@ -38,12 +38,12 @@ Skeletons over spinners on scrollable content: reduces perceived jank on mid dev
 |---|---|
 | Validation timing | Validate on commit (blur/submit); show errors **inline at the field**, not a single global banner (guideline: inline per-field). Field-level errors re-announced on submit |
 | Required fields | Clearly marked; submit blocked with inline message; no silent submit |
-| Amount input | Numeric-only keypad; EGP symbol and decimal handled by formatter; never rounds silently (Q-013) |
+| Amount input | Numeric-only keypad; EGP symbol and decimal handled by formatter; never rounds silently (Q-012) |
 | Date input | Date picker with native Arabic calendar; defaults to today for new entries |
 | Phone input | `+20` prefilled; whitespace/stripping handled at input time (auth-contracts §2.1) |
 | OTP input | 6 digits, auto-advance, paste allowed; error state on wrong code with retry; resend cooldown **60s**, countdown visible (Q-001) |
 | Long names/vendor | Text field, no regex restriction beyond cap; Arabic keyboard is default |
-| Numeric formatting | `1,250.50 ج.م` everywhere (Q-013); amounts bold on read    surfaces |
+| Numeric formatting | `1,250.50 ج.م` everywhere (Q-012); amounts bold on read    surfaces |
 
 Accessibility: every field has a visible label (not placeholder-only); errors are announced to screen readers; contrast ≥ WCAG AA for money figures and warnings.
 
@@ -96,7 +96,7 @@ Legacy from `navigation-map.md` §7, restated as rules:
 - Bidi isolation applied around numbers/money/phone (order stays LTR, labels RTL).
 - Progress bars and skeletons fill **left→right** even in RTL (progress read direction is renderer-fixed).
 - Sheet drag handles, close icons (`×`) — no directional ambiguity.
-- Arabic numeric input vs Latin glyphs: **Latin digits** (`0123456789`) kept for amounts/phone to match backend `numeric(14,2)` checks (Q-013, auth-contracts §2.1); dates display per locale.
+- Arabic numeric input vs Latin glyphs: **Latin digits** (`0123456789`) kept for amounts/phone to match backend `numeric(14,2)` checks (Q-012, auth-contracts §2.1); dates display per locale.
 
 ---
 
@@ -105,7 +105,7 @@ Legacy from `navigation-map.md` §7, restated as rules:
 | Case | UX |
 |---|---|
 | No network, app opens | Home still renders from cache if cached (read-only); banner "لا يوجد اتصال — البيانات قديمة" |
-| Capture attempted offline | Explicit: "يلزم اتصال بالإنترنت لإضافة معاملة" + retry (offline queue out of scope, Q-018) |
+| Capture attempted offline | **Local capture proceeds**: image + type + (optional) metadata stored on-device as a pending capture, deferred sync + AI until connection returns (Q-018 flipped, ADR-007, FR-OFFLINE-001..008) |
 | Any POST fails | Retry with preserved form content (never clear the form on error) |
 | Image upload fails at save | Keep the record retriable; message explains the image didn't upload and can be retried (storage-contracts §4) |
 | Search/filter debounce | 350ms debounce; results reflect applied criteria |

@@ -17,6 +17,7 @@ One business, one user (ASM-003). All content is business-scoped; the UI never s
 | Transaction item | "بند" / Line item | Optional detail beneath a transaction (description + amount); never the primary mental model. |
 | Receipt | "صورة الفاتورة" / Receipt image | Attached image shown in review + detail; read-only after save. |
 | AI extraction | (invisible to user) | Provenance snapshot for AI-originated entries; never a user-facing model. |
+| Pending capture (offline) | "في انتظار الاتصال" / Waiting for connection | Device-local capture awaiting sync (Q-018 flipped, ADR-007); visible in a **Pending list** (not in Transactions until confirmed+synced); device-only, cleared on logout (FR-OFFLINE-006). |
 
 **User-facing truth:** *I have a business → it has categories → I record income and expenses into it → I look at reports.*
 
@@ -54,6 +55,7 @@ Tab level (bottom nav)                 Flows (≥1 level deep)
 ─────────────────────                  ─────────────────────
 Home (SCR-05) ─── FAB ───▶ Add flow: Type (SCR-08) → Capture (SCR-09) → Review & Save (SCR-10) → done
                                    └── Manual entry: straight to Review & Save (SCR-10)
+                                   └── Offline (Q-018 flipped): capture saved as pending → Pending list ("waiting for connection") → sync → Resume in Review & Save (SCR-10)
 Transactions (SCR-06) ─▶ Detail (SCR-07) ─▶ Edit → Review & Save (SCR-10); Delete → confirm (OVR-04)
 Reports (SCR-11) ─ Export (OVR-02); Custom Range → date picker (OVR-03)
 Settings (SCR-12) ─▶ Business Profile (SCR-13) | Categories (SCR-14 → SCR-15) | Web Access (SCR-16)
