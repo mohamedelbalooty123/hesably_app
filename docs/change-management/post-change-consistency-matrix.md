@@ -1,7 +1,7 @@
 # Post-Change Consistency Matrix — Offline Capture Promoted to MVP
 
 **Change ID:** CI-OFFLINE-001 · **Branch:** `docs/offline-mvp-scope`
-**Date:** 2026-09-05 · **Status:** Analysis + edits complete (see final status)
+**Date:** 2026-09-05 · **Status:** ANALYSIS + EDITS COMPLETE · **Final: APPROVED** (see §9)
 **Pre-change baseline:** `docs/change-management/offline-mvp-change-impact.md`
 
 This matrix verifies that every planned doc edit from the change-impact analysis was applied, that no contradictory statements remain, and that the scope invariants (AI trust, account isolation, no schema change) hold across the documentation set.
@@ -125,7 +125,7 @@ Change-impact §5.1 rows 18–19 originally listed `docs/ux/ux/…`; corrected i
 
 ## 7. Global grep audit (residual statement check)
 
-See the audit section of the final status report. This matrix asserts the following greps returned **no** authoritative residual contradictions (historical citations in `offline-mvp-change-impact.md` and ADR-007's "original decision" narrative are intentional):
+See §9 for the concrete grep outputs and the recorded final status. This matrix asserts the following greps returned **no** authoritative residual contradictions (historical citations in `offline-mvp-change-impact.md` and ADR-007's "original decision" narrative are intentional):
 
 | Pattern | Residual (intentional only) |
 |---|---|
@@ -140,3 +140,38 @@ See the audit section of the final status report. This matrix asserts the follow
 
 - `docs/implementation/` and `docs/security/` directories are empty placeholders; the global audit scans them for any future injected files and confirms none exist today.
 - No code, no SQL, no Edge Function changes — in-scope for a later implementation task, not this change.
+
+---
+
+## 9. Global audit results + final status
+
+### 9.1 Grep audit results (post-edit)
+
+| Check | Command / scan | Result |
+|---|---|---|
+| `docs/implementation/`, `docs/security/` | directory scan | **Empty** — no injected files, nothing to audit |
+| Residual `Q-013` anywhere | grep `Q-013` | 60 hits — all **keep-list / export-content** (§5.3) or change-management history; the six §5.2 fix targets (`ux-discovery-review:55`, `interaction-model:41/46/99`, `ux-strategy:24`, `export-contracts:37`) confirmed **gone** |
+| Residual offline-out-of-MVP | grep `offline.*out of (MVP\|scope\|Phase 2)` | Only intentional historical context (change-impact before-state, ADR-007 original-decision) + correct "now IN MVP" verdict at `api-contract-review.md:108` |
+| Old counts | grep `101 MVP\|84 testable` | Only change-management history; production docs say **109** (`requirements.md:1023`, `mobile-design/README.md:31`) and **91** (`acceptance-criteria.md:1160`) |
+| `internet required` as offline behavior | grep `internet required\|يلزم اتصال` | Gone from production docs; offline copy now "waiting for connection" (`تم الحفظ محليًا` / "Saved on this device") |
+| Web Access state names | grep `WEB_ACCESS_DISABLED\|WEB_EMAIL_PENDING\|WEB_ACCESS_ENABLED\|UNLINK_CONFIRMATION` | Canonical 4-state model present in `web-access-contract.md` §1.1 only; no inconsistent variants (`LINKED_NOT_VERIFIED` etc.) anywhere |
+| Count arithmetic | requirements coverage table sum | 7+5+7+8+9+7+5+13+7+4+6+4+6+6+3+3+3+6 = **109** ✅ |
+
+### 9.2 Gates
+
+- (a) UI/UX Pro Max skill engagement for UX-state design — **met** (state machine + invariants authored per §7/§8 of `ux-states.md`)
+- (b) Recomputed totals — **109 / 91** ✅
+- (c) Full post-change grep audit incl. `docs/implementation/` + `docs/security/` — **passed** (9.1)
+
+### 9.3 Final status
+
+| Check | Result |
+|---|---|
+| Residual offline-out-of-MVP in any production doc | None |
+| Cross-account / account-isolation risk | None — queue is device-local, RLS preserved, purge on identity change (FR-OFFLINE-006) |
+| Duplicate-sync defined | Yes — idempotent via client-generated UUID; FAILED retryable |
+| UX states consistent | Yes — pending machine in `ux-states.md`, variants in screens/journeys/nav/IA |
+| Counts recomputed | Yes — 101→109 FR, 84→91 AC |
+| Scope rule | Docs-only; no code/SQL/schema/Edge Function changes |
+
+**Final status: APPROVED** — the change is confined to documentation, preserves the AI-trust and account-isolation invariants, requires no schema change, and all planned edits are applied and verified.
