@@ -255,4 +255,4 @@ None of these change the core rule: extraction is advisory, confirmation is mand
 | No persistence without confirmation | FR-REVIEW-001/002, BR-AI-001, BR-CONFIRM-001, NFR-DATA-001 |
 | Manual entry bypass | FR-CAPTURE-007, BR-REC-002 |
 | Category suggestion | FR-CATEGORY-002 |
-| Image handling & privacy | NFR-SEC-002, NFR-DATA-001, Q-018 |
+| Image handling & privacy | NFR-SEC-002, NFR-DATA-001, ADR-004, ADR-007 |
