@@ -9,8 +9,8 @@ The Flutter mobile app is the **primary product experience** (ASM-001). Its arch
 3. Keep business and AI logic out of widgets so it is unit-testable without UI.
 4. Stay lightweight for low/mid-spec Android devices (NFR-LOWDEV-001, ASM-008).
 5. Support Arabic-first RTL UI with an English toggle (NFR-LANG-001, ASM-015).
-6. Isolate Supabase (auth/db/storage) behind repository interfaces so infrastructure swap and Phase 2 extensions (e.g., offline sync) remain possible without core changes.
-7. Keep the app online-dependent for capture (offline capture is OUT of MVP, Q-018) with graceful messaging.
+6. Isolate Supabase (auth/db/storage) behind repository interfaces so infrastructure swap and offline sync extensions remain possible without core changes.
+7. Make capture **local-first**: capture works with no connectivity as a device-local pending capture, deferring AI processing + sync until online (Q-018 flipped IN MVP; ADR-007); AI output still never persists without user confirmation.
 
 ## 2. Architectural Style
 
@@ -49,8 +49,8 @@ flowchart TB
 
 ## 3. Application Boundaries
 
-- The app is **online-required for the money path**: capture → AI → save all need connectivity. Network failure is surfaced as a clear, retryable message (Q-018, BR-MVP-004). No offline queue is implemented.
-- The app holds **no business data of its own** in MVP beyond transient in-memory state and local temp files for an in-progress capture (image bytes before upload/confirm).
+- **Capture is local-first (offline, MVP):** the image and selected metadata are stored on-device as a pending capture when offline and synced (upload → AI → persistence) when connectivity returns. AI, upload, server-side persistence, cross-device sync, and reports over unsynced data are **online-only** (Q-018 flipped, ADR-007, FR-OFFLINE-001..008, BR-OFFLINE-001..008).
+- The app holds **no business data of its own** beyond transient in-memory state, local temp files for an in-progress capture, a **device-local pending queue** (un-synced captures), and a **read-only cache of previously loaded data** for offline Home display (never implying cloud sync).
 - The app **never holds the Gemini key** or any service-role credentials (Q-007, BR-AI-005).
 - All server requests carry the user's session; the app is fully subject to RLS (NFR-SEC-001).
 - The app **never renders a receipt image from a public URL** — every stored image is fetched through authenticated Storage access.
@@ -108,7 +108,7 @@ flowchart TB
 - Floating "+" reachable in one tap from Home (FR-CAPTURE-001); opens Type Selector (Sale/Income or Purchase/Expense) (FR-CAPTURE-002).
 - Capture UI: in-app camera (FR-CAPTURE-003) or gallery pick (FR-CAPTURE-004); or "Skip — enter manually" straight to an empty Review & Edit form (FR-CAPTURE-007, BR-REC-002).
 - **Advisory image quality check** runs on-device before upload with three outcomes (FR-CAPTURE-005, Q-020): PASS → proceed; WARNING → user may continue; REJECT → prompt to retake. Implemented with lightweight heuristics (brightness distribution, blur/focus estimate); explicitly **not** a strict gate.
-- No network → clear message + retry; no queueing (Q-018, BR-MVP-004).
+- Offline: capture proceeds locally as a pending capture (image + type + optional metadata) with no network required; status "waiting for connection"; sync runs manually ("Sync now") and/or automatically on reconnect (FR-OFFLINE-001..004; ADR-007).
 - Pre-upload, the image is held in the app temp area (not uploaded, not persisted server-side).
 
 ### 5.4 AI Extraction
@@ -221,7 +221,7 @@ State is managed with **Bloc/Cubit** (`flutter_bloc`). **Cubits** cover simple s
 | `ReportRepository` | RLS-scoped summary + category breakdown + comparison aggregates | Supabase DB |
 | `AIFeatureExtractionRepository` | Send image for extraction; return structured result | Edge Function (server-side AI boundary) |
 
-Signatures live in Domain; implementations live in Data. This is the seam where Phase 2 offline sync (a local-first `TransactionRepository`) can later be added without touching use cases.
+Signatures live in Domain; implementations live in Data. A device-local pending queue is a first-class Data-layer component in MVP: a `PendingCaptureRepository` + pending data store (device-local, e.g., SQLCipher/keystore-protected) feeds the sync path that reuses the same repositories on reconnect (ADR-007, FR-OFFLINE-005/006).
 
 ## 10. Data Flow
 
@@ -279,7 +279,7 @@ ProcessingState (loading)
 - **Empty** (Q-019): Home / Transactions / Reports show Arabic action-oriented empty states (e.g. `لا توجد معاملات بعد` with guidance and an `إضافة معاملة` CTA on mobile); never a blank screen.
 - **Error**:
   - Auth: inline OTP error + cooldown resend (FR-AUTH-004/005).
-  - Capture network: clear "internet required" message + retry (Q-018).
+  - Capture network: offline mode stores the capture locally as pending; sync is deferred with "waiting for connection" status; pending list always available (Q-018, FR-OFFLINE-001..004).
   - AI: manual-entry fallback (FR-AI-005/008).
   - Save: error state with retry; no partial success (AC-REVIEW-005).
   - Deletion: confirmation-first; failure surfaced and record retained.
@@ -299,6 +299,7 @@ ProcessingState (loading)
 - All requests authenticated with the user session; app fully subject to RLS (NFR-SEC-001).
 - Storage objects read via authenticated access only; no public URLs for receipts (NFR-SEC-002, ADR-005).
 - Local temp image files isolated to the app's private temp area.
+- **Device-local pending captures** (offline queue) stored in a protected local store (e.g., SQLCipher / Android Keystore-encrypted) and **purged or made inaccessible on logout / account deletion / token expiry / device switch** so a pending capture can never be read or synced under a different account (FR-OFFLINE-006, ADR-007). Pending captures do not survive reinstall (no server copy) — surfaced honestly in UX.
 - Sensitive operations (delete account, unlink web access) preceded by confirmation dialogs (FR-SETTINGS-006, BR-TRANS-004).
 - TLS enforced by platform (all Supabase/Gemini traffic HTTPS).
 
@@ -320,7 +321,7 @@ ProcessingState (loading)
 
 ## 19. Future Extensibility
 
-- **Offline capture + sync (Phase 2)**: a local-first `TransactionRepository` sits behind the same interface; the AI boundary and confirm path remain unchanged when connectivity returns (BR-MVP-004 note).
+- **Offline, extended (Phase 2+)**: MVP already ships a client-side pending queue (ADR-007, FR-OFFLINE-00x); future extension adds cross-device sync, offline reports/analytics, and conflict handling on top of the same local-first path. The AI boundary and confirm path remain unchanged when connectivity returns.
 - **Duplicate hash check (Phase 2)**: the confirm path can record an image hash with the transaction; no flow change (POST-MVP).
 - **Multi-user (Phase 2)**: repositories already express "my business" via RLS; a membership-aware variant is additive.
 - **ETA integration (Phase 2)**: export adapter can emit ETA-compatible output alongside PDF/Excel/CSV using the same period+filters scope.
@@ -333,7 +334,8 @@ ProcessingState (loading)
 |---|---|
 | Phone + OTP auth, 60s cooldown, persistent session | FR-AUTH-001…007, BR-AUTH-001…004, Q-001, Q-002, Q-003 |
 | Onboarding gate (name, type, EGP) | FR-ONBOARD-001…005, BR-BUS-001…003, Q-012 |
-| Capture flow + advisory quality check | FR-CAPTURE-001…007, BR-REC-001/002/005, Q-018, Q-020 |
+| Capture flow + advisory quality check | FR-CAPTURE-001…007, BR-REC-001/002/005, Q-020 |
+| Offline pending queue + deferred sync | FR-OFFLINE-001…008, BR-OFFLINE-001…008, Q-018 (flipped), ADR-007 |
 | AI processing lifecycle + timeout | FR-AI-001, FR-AI-005…009, NFR-PERF-001, Q-008, Q-009 |
 | Review & Edit + confirm gate | FR-REVIEW-001…007, FR-AI-004, BR-CONFIRM-001, NFR-DATA-001 |
 | Category management | FR-CATEGORY-001…005, BR-CATEGORY-001…008, Q-010, Q-021 |
@@ -343,4 +345,4 @@ ProcessingState (loading)
 | Settings & web-access enablement | FR-SETTINGS-001…006, Q-015, Q-016 |
 | RLS / private storage / no silent save | NFR-SEC-001, NFR-SEC-002, NFR-DATA-001, BR-SEC-001/002 |
 | Arabic-first RTL / low-end device | NFR-LANG-001, NFR-LOWDEV-001, ASM-008, ASM-015 |
-| MVP boundaries (offline OUT) | BR-MVP-001…006, Q-018 |
+| MVP boundaries (offline capture IN) | BR-MVP-001…006, BR-OFFLINE-001…008, Q-018 |

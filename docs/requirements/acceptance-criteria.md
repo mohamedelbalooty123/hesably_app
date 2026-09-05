@@ -206,6 +206,90 @@ They choose "Skip — enter manually".
 **Then:**
 An empty entry form is shown and they can record the transaction without AI.
 
+### AC-OFFLINE-001 — Capture Works Offline
+**Requirement:** FR-OFFLINE-001, FR-OFFLINE-002
+
+**Given:**
+A user is on the capture screen with no internet connection.
+
+**When:**
+They capture a receipt (camera or gallery) and select the transaction type.
+
+**Then:**
+The receipt is captured and stored locally as a pending capture; no error is shown and no connectivity is required.
+
+### AC-OFFLINE-002 — Pending List Shows Status
+**Requirement:** FR-OFFLINE-003
+
+**Given:**
+A user has one or more unsynced pending captures.
+
+**When:**
+They open the Pending list.
+
+**Then:**
+Each pending capture is listed with a visible status (pending / syncing / failed), and the user can view or delete a pending capture before it syncs.
+
+### AC-OFFLINE-003 — Deferred Sync on Reconnect
+**Requirement:** FR-OFFLINE-004
+
+**Given:**
+A user has pending captures and connectivity returns.
+
+**When:**
+They tap "Sync now" (or the automatic retry triggers).
+
+**Then:**
+Pending captures upload, AI runs, and each proceeds through the review/confirm step; the status transitions pending → syncing → (ready for review) → synced.
+
+### AC-OFFLINE-004 — Sync Does Not Duplicate
+**Requirement:** FR-OFFLINE-005
+
+**Given:**
+A pending capture is already synced and the user triggers sync again (retry). 
+
+**When:**
+The previously-synced capture UUID is submitted again.
+
+**Then:**
+The server treats it as a no-op and no duplicate transaction/record is created.
+
+### AC-OFFLINE-005 — Pending Is Never Auto-Confirmed
+**Requirement:** FR-OFFLINE-008, NFR-DATA-001
+
+**Given:**
+A pending capture has been synced and AI has returned an extraction with confidence scores.
+
+**When:**
+The user reaches the review step.
+
+**Then:**
+The extracted data is presented for review/confirmation and is not persisted without the user's explicit confirmation (no offline or automatic bypass).
+
+### AC-OFFLINE-006 — Pending Never Crosses Accounts
+**Requirement:** FR-OFFLINE-006
+
+**Given:**
+A user with pending captures logs out (or the account is deleted/token expires/device is switched).
+
+**When:**
+A different account or identity accesses the device afterwards.
+
+**Then:**
+The pendings are purged or cryptographically bound to the original owner and are never visible to or syncable under the other account.
+
+### AC-OFFLINE-007 — Offline Does Not Fabricate Capabilities
+**Requirement:** FR-OFFLINE-007, BR-OFFLINE-008
+
+**Given:**
+A user is offline and views Home.
+
+**When:**
+Previously loaded data is shown.
+
+**Then:**
+The UI shows a read-only cached view and never implies cloud sync or a current/up-to-date status; offline never offers export, analytics, or cross-device access.
+
 ---
 
 ## 4. AI Extraction
@@ -1063,6 +1147,7 @@ An empty state is shown that explains the absence and offers a next action, rath
 | Authentication | FR-AUTH-001…007 | AC-AUTH-001…006 |
 | Business Onboarding | FR-ONBOARD-001…005 | AC-ONBOARD-001…004 |
 | Receipt Capture | FR-CAPTURE-001…007 | AC-CAPTURE-001…006 |
+| Offline Capture | FR-OFFLINE-001…008 | AC-OFFLINE-001…007 |
 | AI Data Extraction | FR-AI-001…009 | AC-AI-001…006 |
 | Review and Edit | FR-REVIEW-001…007 | AC-REVIEW-001…005 |
 | Categories | FR-CATEGORY-001…005 | AC-CATEGORY-001…004 |
@@ -1072,6 +1157,6 @@ An empty state is shown that explains the absence and offers a next action, rath
 | Settings | FR-SETTINGS-001…006 | AC-SETTINGS-001…006 |
 | Web Dashboard | FR-WEB-* | AC-WEB-* (incl. AC-WEB-EMPTY-001) |
 
-**Total acceptance criteria: 84**
+**Total acceptance criteria: 91**
 
 > Note: NFR items (e.g., NFR-SEC-001 row-level security, NFR-SEC-002 private bucket, NFR-DATA-001 no silent save) are cross-checked within relevant criteria (see AC-AI-001/002, AC-REVIEW-002, AC-WEB-AUTH-002) and are verified through the corresponding functional flows rather than as standalone user-visible behaviors.

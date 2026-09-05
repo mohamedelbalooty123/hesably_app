@@ -69,7 +69,7 @@ Legend: ✅ Supported · 🟡 Partially supported · ⚪ Not supported · ➖ Ou
 | Web transaction create | blocked in app/UI; not a DB distinction | `web-access-contract.md` §7, `transaction-contracts.md` §11 | 🟡 | matches DB limitation; enforced client-side (BR-WEB-005) |
 | Account deletion | admin Edge Function, service_role, cascade | `auth-contracts.md` §5, `data-access-contracts.md` §2.9 | ✅ | ADR-DB-005, FR-SETTINGS-006 |
 | Storage security | no public URLs, owner-scoped, immutable | `storage-contracts.md`, ADR-API-003 | ✅ | NFR-SEC-001/002 |
-| Offline | N/A MVP | `data-access-contracts.md` §3.4 | ➖ | Q-018 |
+| Offline | **client-side pending queue (MVP)**: capture local-first, deferred sync on reconnect; online-only: AI, upload, persistence, cross-device, reports over unsynced data | `data-access-contracts.md` §3.4 | ✅ | Q-018 (flipped), ADR-007, FR-OFFLINE-001..008 |
 | Real-time | N/A MVP (LWW) | `data-access-contracts.md` §3.3 | ➖ | Q-006 |
 
 ---
@@ -105,7 +105,7 @@ Legend: ✅ Supported · 🟡 Partially supported · ⚪ Not supported · ➖ Ou
 | `ai-edge-function-contract.md` | FR-AI-001..009, FR-CATEGORY-002, BR-AI-001..005, BR-CONFIRM-001, NFR-DATA-001, NFR-PERF-001, Q-007/008/009 | none |
 | `data-access-contracts.md` | all CRUD + auth + AI + settings + account | API-M2 (ordering) |
 
-**Requirement coverage verdict:** Complete. No required MVP behavior is unmodeled. The two gaps (web create, offline/real-time) are correctly *scoped out*, matching the concluded decisions.
+**Requirement coverage verdict:** Complete. No required MVP behavior is unmodeled. The scoped-out gaps remain only where decision permits: **web create** (out of MVP, BR-WEB-005) and **extended offline / real-time** (offline capture + deferred sync is now IN MVP via Q-018 flipped / ADR-007; real-time stays out per Q-006).
 
 ---
 
@@ -314,7 +314,7 @@ Legend: ✅ Supported · 🟡 Partially supported · ⚪ Not supported · ➖ Ou
 
 | Case | Contract position | Authority | Status |
 |---|---|---|---|
-| Offline capture | not MVP; block with message | Q-018 | ✅ |
+| Offline capture | **MVP: local-first pending queue + deferred sync** (upload → AI online → review → persist); AI never auto-persists (Q-018 flipped, ADR-007, FR-OFFLINE-001..008) | ✅ |
 | Real-time sync | not MVP; LWW concurrency | Q-006 | ✅ |
 | Web mid-session unlink | next request rejected → disabled state | Q-015 | ✅ |
 | AI timeout (15s) | manual-entry fallback, no dead end | Q-009 | ✅ |

@@ -21,7 +21,7 @@ The mobile app is the **source of truth for account creation and data entry** (F
 | **Arabic-first, RTL** (NFR-LANG-001, Q-019) | Every screen, label, empty state, error, and export is Arabic-first RTL; English is a secondary toggle. Direction-dependent icons (back, chevrons, order) reflect RTL. | Yes |
 | **AI never auto-saves** (NFR-DATA-001, BR-CONFIRM-001, Q-008) | The capture flow always ends in a visible **Review & Save** step. "Saved" is only shown after the user's own confirm action. | Yes |
 | **No dead end in AI processing** (FR-AI-005/006/008/009, Q-008/Q-009) | Every failure / timeout / non-receipt path yields a next action: retry or **enter manually**. | Yes |
-| **Numbers you can trust** (Q-012, BR-REPORT-004, Q-013) | One EGP format everywhere (`1,250.50 ج.م`); amounts never silently round; low-confidence AI fields are visibly flagged. | Yes |
+| **Numbers you can trust** (Q-012, BR-REPORT-004) | One EGP format everywhere (`1,250.50 ج.م`); amounts never silently round; low-confidence AI fields are visibly flagged. | Yes |
 | **Low/mid-spec Android friendly** (NFR-LOWDEV-001, NFR-PERF-001) | Lightweight interactions, no heavy animation, skeletons not spinners, debounced search, compressed images. | Yes |
 | **Session persistence** (Q-003, FR-AUTH-006/007) | Returning users land directly on Home; no repeated login. | Yes |
 | **Phone + OTP only** (FR-AUTH-002, BR-MVP-002) | No password/email login on mobile; 60-second resend cooldown (Q-001). | Yes |
@@ -87,7 +87,7 @@ Behaviors recorded in `assumptions.md` (ASM-001…ASM-016) that shape UX:
 | **No undo/trash** for deleted transactions — confirmation dialog is the only safeguard (BR-TRANS-004). | MVP scope; simple model; destructive confirmations required. | G7; AC-TRANS covering delete |
 | **Last Write Wins** for concurrent edits (Q-006). | No conflict UI in MVP; edits are rare and owner-only. | No merge/conflict UI surface |
 | **Export scope = period + active filters** (Q-014). | Export always reflects exactly what the user is looking at. | Export Options sheet mirrors the applied filters |
-| **AI processing always runs via the Edge Function** even when the user has no internet → offline is explicitly blocked (Q-018). | Predictable, secure boundary; images not queued. | Offline state: "internet required" + retry |
+| **AI processing always runs via the Edge Function** and is **online-only**; offline, capture works as a **device-local pending capture** that syncs + extracts AI when the connection returns (Q-018 flipped → IN MVP; ADR-007). | Predictable, secure boundary (AI never auto-persists; images never queued to the server); offline never bypasses review. | Local pending list + "waiting for connection" state; sync on reconnect |
 | **4 bottom tabs + 1 FAB** (no middle-tab FAB). | 4 destinations is a navigable maximum that keeps the FAB unambiguous and the capture task globally reachable. | Navigation shell (SCR-05/06/11/12 + FAB) |
 
 ---

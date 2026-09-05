@@ -45,6 +45,25 @@ REVIEW (SCR-10)
    └─ EXIT with unsaved ─▶ OVR-07 (Keep editing / Discard)
 ```
 
+**Offline (Q-018 flipped IN MVP, ADR-007):** when there is no connection, `CAPTURED` moves to a **device-local pending capture** instead of `PROCESSING` — AI is online-only. The pending-queue machine:
+
+```
+LOCAL_CAPTURED (image + type + optional metadata saved on-device)
+   │  offline
+   ▼
+WAITING_FOR_NETWORK (in Pending list, "waiting for connection")
+   │  manual "Sync now" and/or automatic on reconnect
+   ▼
+UPLOADING ─▶ PROCESSING_AI (re-enter the online machine at PROCESSING)
+   │  FAILED (retryable) ─▶ WAITING_FOR_NETWORK
+   ▼
+READY_FOR_REVIEW ─▶ CONFIRMED (review/confirm)
+   ├─ <80% confidence → REVIEW_REQUIRED flag
+   └─ CONFIRMED ─▶ SYNCED (row + image persisted)
+```
+
+Pending captures are **device-local only**; they never survive account switch/logout (FR-OFFLINE-006), never sync to another account, and don't survive reinstall — surfaced honestly in the Pending list. AI never auto-persists (NFR-DATA-001).
+
 Rules: PROCESSING is uninterruptible except the always-visible **manual escape**; every terminal failure state presents **retry** and/or **manual** as explicit actions (FR-AI-005/006/008/009, Q-008/Q-009).
 
 ---
@@ -61,8 +80,8 @@ Rules: PROCESSING is uninterruptible except the always-visible **manual escape**
 | SCR-06 Transactions | skeleton list | no-transactions empty | filtered no-match | retry | cached + banner | filter bar always visible |
 | SCR-07 Detail | skeleton | (n/a — record-scoped) | — | "المعاملة غير موجودة" → back | image may not load | offline: text still readable |
 | SCR-08 Type | — | — | — | — | — | static |
-| SCR-09 Capture | camera init | — | — | permission / camera / gallery errors | explicit blocked (Q-018) | quality rejects are guidance, not errors |
-| SCR-10 Review & Save | prefill-in (AI) | — | — | save error → retry (form intact) | blocked | validation inline |
+| SCR-09 Capture | camera init | — | — | permission / camera / gallery errors | local pending capture (Q-018 flipped) | quality rejects are guidance, not errors |
+| SCR-10 Review & Save | prefill-in (AI) | — | — | save error → retry (form intact) | save deferred → pending (same form intact once online) | validation inline |
 | SCR-11 Reports | skeleton | no-data-for-period | — | retry | cached + banner | period change re-enters LOADING |
 | SCR-12 Settings | profile placeholder | — | — | retry | cached | static rows fine |
 | SCR-13 Business Profile | — | — | — | save error | blocked | — |
@@ -88,7 +107,8 @@ Used verbatim in states above (single source for translation).
 | General load error | حدث خطأ في تحميل البيانات — إعادة المحاولة | Couldn’t load data — retry |
 | General save error | حدث خطأ في الحفظ — راجع البيانات وأعد المحاولة | Couldn’t save — check and retry |
 | Offline banner | لا يوجد اتصال بالإنترنت — تُعرض بيانات محفوظة | You’re offline — showing saved data |
-| Capture offline | يلزم اتصال بالإنترنت لإضافة معاملة | Internet is required to add a transaction |
+| Capture offline → pending | تم الحفظ محليًا — ستُعالج عند توفر الإنترنت | Saved on this device — will process when you're back online |
+| Pending sync | في انتظار الاتصال بالإنترنت | Waiting for connection |
 | AI structured failure | لا يمكن قراءة بيانات الفاتورة بدقة — أدخلها يدويًا | Couldn’t read this receipt accurately — enter it manually |
 | AI timeout | استغرق الاستخراج وقتًا طويلًا — أدخل البيانات يدويًا | Extraction took too long — enter manually |
 | Non-receipt | يبدو أن الصورة ليست فاتورة — التقط صورة أوفى | This doesn’t look like a receipt — retake or enter manually |
@@ -104,3 +124,4 @@ Used verbatim in states above (single source for translation).
 3. **ERROR keeps the previous frame** when possible (cached/refresh-pattern) instead of replacing the screen with a blank error page.
 4. **In-flight buttons are disabled + labeled** (no double submit) and always resolve to success or error.
 5. **AI states never block manual entry** — the manual path is reachable from PROCESSING, FAILURE, TIMEOUT, and NON-RECEIPT.
+6. **Offline captures are never lost silently** — a pending capture is always visible in a Pending/Captures list with a retry path ("Sync now"); account switch/logout purges it (FR-OFFLINE-006), surfaced in the list's copy.

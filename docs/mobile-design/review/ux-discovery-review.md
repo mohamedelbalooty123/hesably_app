@@ -33,7 +33,7 @@
 | Session persistence | §2 | — | §2 | SCR-01/05 | J2 | — | §3 |
 | RTL Arabic-first | §2 | §5/§7 | §1 | all labels | — | §7 | §4 (copy) |
 | Back never broken | — | — | §7/§8 | — | — | §6 | — |
-| Offline (no queue) | §7 | — | §3 | SCR-09 | J13 | §8 | §3 |
+| Offline capture (pending queue) | §7 | — | §3 | SCR-09/10 | J13 | §8 | §3 |
 | Export honors filters | §7 | — | §5 | OVR-02 | J9 | — | §3 |
 
 > No contradictions found. One seam to watch: **web-access linking live state** (BR-WEB-006 unlink) is only confirmed from SCR-16 — the dashboard-side state isn't visible in a mobile-only MVP beyond the explicit "linked" confirmation.
@@ -51,8 +51,8 @@
 | D-05 | Empty-state AI hints & "Enter manually" reachable from every AI terminal state | G3 no-dead-ends invariant |
 | D-06 | Category picker reuses default-then-custom order + AI suggestion badge | One source of truth for the category list |
 | D-07 | Skeletons over spinners on content lists; inline progress on actions | NFR-LOWDEV/PREF; perceived latency on mid devices |
-| D-08 | Camera errored / offline = explicit blocked message, never silent | Q-018 offline out of scope; predictable boundary |
-| D-09 | Latin digits kept for amounts/phone even inside Arabic-first UI | Backend `numeric(14,2)` + phone checks (Q-013) |
+| D-08 | Camera errored / offline = never silent: offline **saves as a device-local pending capture** (visible in Pending list with sync path); camera error = explicit blocked message + retry | Q-018 flipped IN MVP (ADR-007); predictable boundary |
+| D-09 | Latin digits kept for amounts/phone even inside Arabic-first UI | Backend `numeric(14,2)` + phone checks (Q-012) |
 | D-10 | No FR-REPORT-* exists in MVP — reports anchor to FR-DASH-004…007 | Traceability hygiene caught and corrected in-review |
 
 ---

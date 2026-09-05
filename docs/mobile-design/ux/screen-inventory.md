@@ -90,12 +90,12 @@
 ### SCR-09 Capture — التقاط الفاتورة (Add-flow step)
 | Field | Content |
 |---|---|
-| Purpose | Camera-first capture with gallery fallback + quality gating (FR-CAPTURE-003/004/005, Q-020) |
-| Content | Camera viewfinder; "فتح من المعرض" (gallery) action; "إدخال يدوي" (manual skip); inline quality result (PASS / WARNING with continue / REJECT with retake guidance); AI processing state (visible 15s ceiling, Q-009) |
-| Actions | Shoot/retake; pick gallery; continue on warning; manual skip; on processing: wait / timeout → manual |
+| Purpose | Camera-first capture with gallery fallback + quality gating (FR-CAPTURE-003/004/005, Q-020); **offline = local pending capture** (Q-018 flipped, ADR-007) |
+| Content | Camera viewfinder; "فتح من المعرض" (gallery) action; "إدخال يدوي" (manual skip); inline quality result (PASS / WARNING with continue / REJECT with retake guidance); AI processing state (visible 15s ceiling, Q-009); offline → "تم الحفظ محليًا — ستُعالج عند توفر الإنترنت" pending banner |
+| Actions | Shoot/retake; pick gallery; continue on warning; manual skip; on processing: wait / timeout → manual; offline: keep as pending / retry when online |
 | Entry | Type selected (SCR-08) |
-| Exit | Processing → Review & Save (SCR-10) with prefill; manual → empty form (SCR-10); back → type (SCR-08) |
-| States | Camera permission denied, gallery unavailable, blurry/dark warning/reject, AI processing, AI failure/timeout/non-receipt |
+| Exit | Processing → Review & Save (SCR-10) with prefill; manual → empty form (SCR-10); offline → Pending list ("waiting for connection"); back → type (SCR-08) |
+| States | Camera permission denied, gallery unavailable, blurry/dark warning/reject, AI processing, AI failure/timeout/non-receipt, offline (local pending capture) |
 
 ### SCR-10 Transaction Form — Review & Save (مراجعة وحفظ)
 | Field | Content |
@@ -105,7 +105,7 @@
 | Actions | Save (confirm — creates record + links image, if any); Back with unsaved content → discard confirmation (OVR-07) |
 | Entry | Capture pre-fill, manual skip, or Edit from Detail |
 | Exit | Save → success toast → return to origin (Home or Detail); cancel |
-| States | Validation (amount > 0, required date/category), save-in-progress (row + image one logical commit), save error (retry), edit mode vs create mode |
+| States | Validation (amount > 0, required date/category), save-in-progress (row + image one logical commit), save error (retry), edit mode vs create mode, offline → save deferred as pending (req. restore on reconnect) |
 
 ---
 

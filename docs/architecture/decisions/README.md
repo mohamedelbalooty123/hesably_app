@@ -12,6 +12,7 @@ This directory records the significant architectural decisions for the **Smart I
 | [ADR-004](./ADR-004-ai-processing.md) | Server-side AI processing boundary (extraction is never persistence) | Accepted |
 | [ADR-005](./ADR-005-storage.md) | Private receipt storage with owner-scoped authenticated access | Accepted |
 | [ADR-006](./ADR-006-web-access.md) | Web access via email linking + magic link; no independent web signup | Accepted |
+| [ADR-007](./ADR-007-offline-capture.md) | Offline receipt capture + deferred sync (client-side pending queue; no schema change) | Accepted |
 
 ## How to use
 

@@ -179,7 +179,7 @@ Conceptual design (no SQL in this phase):
 | Persist transaction | Client treats (image upload + insert) as one operation; failure → retryable error state, no partial success presented (AC-REVIEW-005) |
 | Delete | Record + image removal; failure surfaced, record retained |
 | AI boundary | Extraction failure/timeout at client (Q-008, Q-009); the function returns a structured failure to avoid ambiguous states |
-| Offline | No network → clear "internet required" message + retry; no queueing (Q-018) |
+| Offline | Capture is client-side local-first (pending queue); backend sees deferred, confirmed writes on reconnect — idempotent sync via client UUID (Q-018 flipped, FR-OFFLINE-004/005, ADR-007) |
 
 ## 15. Security
 
@@ -211,7 +211,7 @@ Conceptual design (no SQL in this phase):
 |---|---|
 | Multi-user access | Membership relation + RLS generalization from owner to member-with-role (ASM-002, ASM-006) |
 | Real-time sync | Supabase Realtime on RLS-scoped tables; unchanged ownership model (Q-006 note) |
-| Offline capture + sync | Client-side local queue; backend unchanged (accepts confirmed writes on reconnect) (BR-MVP-004) |
+| Offline capture + sync | Client-side local queue (MVP); backend unchanged (accepts deferred confirmed writes on reconnect, idempotent via client UUID) (ADR-007, FR-OFFLINE-005) |
 | Duplicate receipt hash | Hash stored/checked at confirm time; no flow change |
 | ETA integration | Export mapping/adapters or a submission Edge Function; no core change |
 | Push notifications | cron/scheduled Edge Functions over RLS-scoped data |

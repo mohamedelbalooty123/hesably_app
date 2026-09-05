@@ -15,6 +15,20 @@ Web: Email → Magic Link → Same auth.uid() → Same business → Same RLS
 - The linked email maps to the **same Supabase user** created on mobile (Q-016).
 - No independent web account; no self-signup (BR-WEB-001).
 
+### 1.1 Normalized state model
+
+The web-access lifecycle is exactly **four canonical states**. UI and both clients use these names for state, CTA labels, and messaging:
+
+| State | Meaning | Seen when | Canonical action | Next state |
+|---|---|---|---|---|
+| `WEB_ACCESS_DISABLED` | No email linked; mobile-only | Settings shows "Enable Web Access" | Mobile: Enable Web Access (email link) | `WEB_EMAIL_PENDING` (or back to `WEB_ACCESS_DISABLED` on failure) |
+| `WEB_EMAIL_PENDING` | Email link requested but not yet first-used | After enabling, before first successful dashboard login | Dashboard: send/use magic link (FR-WEB-AUTH-004 expired-link recoverable) | `WEB_ACCESS_ENABLED` |
+| `WEB_ACCESS_ENABLED` | Email linked + web sessions working | Dashboard home / authenticated routes | Use dashboard; or Unlink (`UNLINK_CONFIRMATION`) | `UNLINK_CONFIRMATION` |
+| `UNLINK_CONFIRMATION` | Unlink confirm dialog/step; `web_email` cleared → back to disabled | Settings → "Unlink Web Access" | Confirm unlink (mobile) / next web request rejected → redirect to disabled state (Q-015) | `WEB_ACCESS_DISABLED` |
+
+- **Error path** (all states): network failure → retryable error state, state unchanged.
+- **No new feature** — this normalizes the states the flow already produces (enable → pending → enabled → unlink), giving both clients one shared vocabulary.
+
 ---
 
 ## 2. Enable Web Access (from Mobile)

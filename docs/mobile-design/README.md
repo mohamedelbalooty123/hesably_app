@@ -28,7 +28,7 @@
 
 Resolve any conflict in this order (highest authority first):
 
-1. `docs/requirements/requirements.md` — 101 functional requirements (FR-*)
+1. `docs/requirements/requirements.md` — 109 functional requirements (FR-*)
 2. `docs/requirements/business-rules.md` — business rules (BR-*)
 3. `docs/requirements/acceptance-criteria.md` — testable Given/When/Then (AC-*)
 4. `docs/requirements/open-questions.md` — resolved decisions (Q-001…Q-022)
@@ -50,7 +50,7 @@ Where requirements and contracts conflict, the **acceptance criteria and resolve
 | RLS / private storage — no public surface ever exposed to the UI | Cross-cutting; affects only which reads the UI can rely on |
 | Phone + OTP only on mobile MVP; 60s resend cooldown | `user-journeys.md` J1, `ux-states.md` auth states |
 | Low/mid-spec Android — lightweight, no heavy animation | `ux-strategy.md` principles, `interaction-model.md` performance |
-| Offline capture out of scope (explicit "internet required" messaging) | `ux-states.md` offline, `interaction-model.md` errors |
+| Offline capture: **device-local pending queue + deferred sync** (MVP; Q-018 flipped, ADR-007) | `ux-states.md` offline + pending machine, `interaction-model.md` errors, `navigation-map.md` add flow, `user-journeys.md` J13 |
 | Web dashboard is companion only; creation mobile-only | `navigation-map.md` (scope boundary) |
 | Unified report periods: This Week / This Month / Last Month / YTD / Custom | `info-architecture.md`, `screen-inventory.md` (Reports) |
 

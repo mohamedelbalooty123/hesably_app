@@ -25,7 +25,7 @@ Adopt a **simple, pragmatic layered architecture per component** — not a singl
 - **Separation of concerns / testability:** Domain logic (validation, reviewer gating, EGP semantics, period/export scope, category normalization) is framework-free, so the most bug-prone logic is unit-testable (mobile §18).
 - **MVP simplicity:** each component uses the minimum machinery that still gives clean boundaries. RLS replaces a custom authz layer; the Edge Function replaces a bespoke AI service; client-side export replaces an export service.
 - **Consistency between platforms:** both clients share one schema, one ownership model, one period set, one category model, and one currency format (Q-011, Q-012, Q-021), reinforced by a common responsibility matrix (`backend-architecture.md` §3).
-- **Extensibility:** layer/repository seams localize Phase 2 items (offline sync, multi-user, server export) without redesign.
+- **Extensibility:** layer/repository seams localize Phase 2 items (extended offline sync, multi-user, server export) without redesign; the same seams host the MVP offline pending queue (ADR-007).
 
 ## Consequences
 

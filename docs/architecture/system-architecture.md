@@ -257,7 +257,7 @@ flowchart LR
 - Reachable in one tap anywhere (FR-CAPTURE-001).
 - Type selected: Sale/Income or Purchase/Expense (FR-CAPTURE-002).
 - Image quality check is advisory: PASS / WARNING / REJECT (FR-CAPTURE-005, Q-020).
-- Offline: no queueing; a clear message explains that internet access is required and allows retry (Q-018).
+- Offline: capture is local-first — no network required (Q-018 flipped, ADR-007). With no connectivity the receipt and selected metadata are stored on-device as a pending capture; sync + AI processing run when the connection returns (FR-OFFLINE-001..004).
 - Manual option skips AI entirely (FR-CAPTURE-007, BR-REC-002).
 
 ### 9.4 Receipt Processing
@@ -410,7 +410,7 @@ Boundaries:
 
 | Failure | Behavior | Source |
 |---|---|---|
-| No network during capture | No offline queueing; clear message that internet is required; retry allowed | Q-018, BR-MVP-004 |
+| No network during capture | Capture proceeds offline as a local pending capture; sync + AI processing deferred until connectivity returns; "waiting for connection" status + retry | Q-018 (flipped), BR-MVP-004, FR-OFFLINE-001..008, ADR-007 |
 | AI extraction failure (missing required info or overall confidence < 50%) | Route to manual entry; never a hard error | FR-AI-005/006, Q-008 |
 | AI timeout (> 15s, no usable result) | Timeout message + "Enter manually instead" | FR-AI-008, Q-009 |
 | Non-receipt image (empty/near-empty result) | "Couldn't read this as a receipt, try again or enter manually" | FR-AI-009 |
@@ -450,12 +450,12 @@ In scope for the MVP build:
 
 Explicitly out of the MVP architecture (documented, not built):
 
-- Offline capture/queueing/sync (Q-018) — network required during capture.
 - Web transaction creation (Q-005, Q-017).
 - Multi-user/multi-branch (Phase 2/3).
 - ETA e-invoice/e-receipt integration (Phase 2).
 - Duplicate-receipt hash detection (POST-MVP).
 - Real-time sync / conflict resolution (POST-MVP; MVP is last-write-wins).
+- Extended offline capabilities beyond capture + deferred sync — offline AI, offline upload, offline reports/analytics, offline cross-device sync (FR-OFFLINE-007).
 - Push notifications, recurring templates, low-stock, WhatsApp submission, plain-language summaries, loan tracking.
 - Multi-currency, double-entry accounting, payroll, direct government filing (out of scope).
 
@@ -467,7 +467,7 @@ The architecture is shaped so the documented Phase 2 / Phase 3 items slot in wit
 |---|---|
 | ETA e-invoice/e-receipt integration | Export layer already produces structured data; a future mapping/export adapter (period-scoped) can target ETA formats; no core change |
 | Multi-user access per business | Ownership model (user → business → data) extends to membership linking many users to one business; RLS concept generalizes to "member of the business" |
-| Offline capture + sync | A future local-first queue in the mobile data layer would feed the same AI boundary and the same persistence path on reconnect |
+| Offline capture + sync (extended) | MVP ships a client-side pending queue (ADR-007, FR-OFFLINE-00x); future extension adds cross-device sync, offline reports, and conflict handling on top of the same local-first queue |
 | Duplicate-receipt hash check | Storage upload path can compute and record an image hash at confirm time without changing flow |
 | Real-time sync / conflict handling | Edge Function + Supabase Realtime can layer on top of the existing RLS-scoped reads; MVP intentionally omits (Q-006) |
 | Push notifications | New scheduled/cron Edge Functions over the existing RLS-scoped data |
@@ -498,7 +498,8 @@ No speculative component is built now; these are seams, not scaffolding.
 |---|---|
 | Phone + OTP auth, persistent session | FR-AUTH-001…007, BR-AUTH-001…004, NFR-SEC-001, Q-001, Q-002, Q-003 |
 | Business onboarding (name, type, EGP) | FR-ONBOARD-001…005, BR-BUS-001…003, Q-012 |
-| Capture flow + advisory quality check | FR-CAPTURE-001…007, BR-REC-001/002/005, Q-018, Q-020 |
+| Capture flow + advisory quality check | FR-CAPTURE-001…007, BR-REC-001/002/005, Q-020 |
+| Offline capture + deferred sync (client-side pending queue) | FR-OFFLINE-001…008, BR-OFFLINE-001…008, Q-018 (flipped), ADR-007 |
 | Server-side AI boundary | FR-AI-001, BR-AI-005, Q-007, ADR-004 |
 | Confidence model & failure routing | FR-AI-003…006, FR-AI-008, FR-AI-009, BR-AI-002/003, Q-008, Q-009 |
 | Review & confirmation gate | FR-REVIEW-001…007, BR-CONFIRM-001, NFR-DATA-001 |
@@ -511,4 +512,4 @@ No speculative component is built now; these are seams, not scaffolding.
 | Web dashboard features | FR-WEB-DASH-001…006, FR-WEB-TRANS-001…006, FR-WEB-REPORT-001…003, FR-WEB-CATEGORY-001…003, FR-WEB-SETTINGS-001…003, Q-005, Q-017, Q-019 |
 | RLS / private storage / no silent save | NFR-SEC-001, NFR-SEC-002, NFR-DATA-001, BR-SEC-001/002 |
 | RTL Arabic-first, low-end device, performance | NFR-LANG-001, NFR-LOWDEV-001, NFR-PERF-001, ASM-008, ASM-015 |
-| MVP boundaries (offline OUT, web create OUT, etc.) | BR-MVP-001…006, Q-005, Q-017, Q-018 |
+| MVP boundaries (offline capture IN, web create OUT, etc.) | BR-MVP-001…006, BR-OFFLINE-001…008, Q-005, Q-017, Q-018 |

@@ -34,7 +34,7 @@ Reports screen (period + filters active)
 | **Client** | Flutter Mobile, Next.js Dashboard |
 | **Generation** | Client-side (lightweight PDF library) |
 | **Content** | 1. Report period, 2. Total income, 3. Total expenses, 4. Net, 5. Category breakdown, 6. Transaction list for the scope |
-| **Currency** | EGP format (e.g., `1,250.50 ج.م`) (Q-013, BR-EXPORT-003) |
+| **Currency** | EGP format (e.g., `1,250.50 ج.م`) (Q-012, BR-EXPORT-003) |
 | **Delivery** | Mobile: share sheet (WhatsApp, email, save) (FR-EXPORT-004); Web: direct download (FR-WEB-REPORT-003) |
 | **Language** | Arabic (RTL layout) as primary; matches the active UI language |
 | **Optimization** | Optimized for human reading and accountant sharing (Q-013) |

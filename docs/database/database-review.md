@@ -87,7 +87,7 @@ No MVP requirement is unmodeled. No unnecessary/out-of-scope feature is modeled.
 | BR-EXPORT-001/002 export scope + formats | RLS-scoped reads + client generation | ✅ |
 | BR-WEB-002 email links to existing user | `web_email` + Supabase identity link | ✅ |
 | BR-SEC-001 data isolation by owner | RLS on all 6 tables | ✅ |
-| BR-MVP-004 offline OUT | not modeled | ✅ correctly absent |
+| BR-MVP-004 offline capture IN MVP | **client-side pending queue (ADR-007); deliberately NOT modeled** — DB schema unchanged; deferred confirmed writes rely on client-supplied UUIDs for idempotent sync | ✅ correctly absent |
 | BR-MVP-005 web create OUT | app-level guard | ✅ (see LOW-01) |
 
 ---
@@ -262,6 +262,8 @@ Findings:
 
 Correctly **not** over-modeled: double-entry accounting, payroll, multi-currency, government tax submission, offline capture/sync, duplicate-receipt hashing, web transaction creation — none are modeled, matching the finalized scope. The schema is a deliberately minimal "income / expense / receipt / category / reporting" model.
 
+> **Note (2026-09-05, ADR-007 / Q-018 flipped):** offline receipt **capture + deferred sync is now an MVP** capability, but it is a **client-side pending queue only** — the DB schema is intentionally unchanged. Idempotent sync on reconnect works because transactions accept **client-generated UUID `id`s** (the column has no dependency on the DB default), so a retry of a deferred confirmed write is naturally idempotent. Consider this an explicit, deliberate "not modeled" case.
+
 ---
 
 ## 16. Future Extensibility Review
@@ -273,7 +275,8 @@ Correctly **not** over-modeled: double-entry accounting, payroll, multi-currency
 | Phase 2 recurring transactions | new template table; additive | no |
 | Phase 2 low-stock | additive inventory tables | no |
 | Phase 2 notifications | cron Edge Functions over RLS data | no |
-| Phase 2 offline sync | `updated_at` present for reconciliation | no |
+| Offline capture + deferred sync (MVP, ADR-007) | client-side pending queue; DB unchanged — accepts confirmed writes on reconnect via client-generated UUIDs (idempotent retry) | no |
+| Phase 2 offline sync (extended: reconciliation / multi-device) | `updated_at` present for reconciliation | no |
 | Phase 3 WhatsApp / multi-branch / credit / AI summary | additive ingestion/providers | no |
 | Multi-currency (future) | `currency_code` CHECK already has a loosening migration path | no (seam noted) |
 
