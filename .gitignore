@@ -18,6 +18,7 @@ build/
 Thumbs.db
 
 # Secrets
+.secrets/
 .env
 .env.local
 *.pem
@@ -28,3 +29,7 @@ supabase/.temp/
 # Node (dashboard - future)
 node_modules/
 .next/
+
+# Python (skill scripts)
+__pycache__/
+*.pyc
