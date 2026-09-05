@@ -464,8 +464,11 @@ All Supabase client errors follow a consistent pattern:
 
 ### 3.4 Offline
 
-- Not in MVP scope (Q-018). Network required for all operations.
-- Extension point: local-first queue in TransactionRepository (Phase 2).
+- **MVP (Q-018 flipped, ADR-007):** capture is local-first. Offline, the mobile client stores a pending capture (image + type + optional metadata) in a **device-local queue** and defers AI processing + persistence until connectivity returns.
+- The server / API layer is unchanged: on reconnect, the client **synces deferred confirmed writes using the same contracts below** (image upload → transaction insert), with **client-generated UUID `id`s** making retries idempotent (INSERT with same `id`; `/transactions?select=*&id=eq.<id>` check on conflict).
+- After reconnect, the client resumes the normal flow: upload → **AI extraction (online-only)** → **user review/confirm** → persist. **AI output never persists without confirmation**, online or offline (NFR-DATA-001, BR-AI-001, FR-OFFLINE-008).
+- Upload / AI / persistence / cross-device sync / reports over unsynced data remain **online-only** (FR-OFFLINE-001..008, BR-OFFLINE-001..008).
+- Extension point: local-first queue beyond capture (extended sync, conflict resolution) — Phase 2 (Q-018 future).
 
 ---
 
@@ -479,6 +482,7 @@ All Supabase client errors follow a consistent pattern:
 | Transaction CRUD | FR-TRANS-001..013, FR-WEB-TRANS-001..006, BR-TRANS-001..007, Q-005, Q-006, Q-017, Q-022 |
 | Reports | FR-DASH-001..007, FR-WEB-DASH-001..006, FR-WEB-REPORT-001..003, BR-REPORT-001..004, Q-011, Q-012 |
 | Export | FR-EXPORT-001..004, FR-WEB-REPORT-003, BR-EXPORT-001..003, Q-013, Q-014 |
+| Offline (pending queue + deferred sync) | FR-OFFLINE-001..008, BR-OFFLINE-001..008, Q-018 (flipped), ADR-007 |
 | AI extraction | FR-AI-001..009, BR-AI-001..005, Q-007, Q-008, Q-009, ADR-API-002 |
 | Settings / web access | FR-SETTINGS-001..006, FR-WEB-SETTINGS-001..003, Q-015, Q-016 |
 | Security / RLS | NFR-SEC-001, NFR-SEC-002, NFR-DATA-001, BR-SEC-001/002 |
