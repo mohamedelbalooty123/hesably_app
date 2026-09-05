@@ -264,3 +264,20 @@ Migrated SQL is mirrored into `supabase/migrations/0001…0013_*.sql` for versio
 ## Final Status
 
 **COMPLETE**
+
+---
+
+## 10. Post-Report Follow-up Note (2026-09-05) — NOT a deployment change
+
+This addendum is appended after deployment; it does **not** alter the deployed state described above.
+
+**Product change:** Offline receipt **capture + deferred sync** was promoted to MVP by **Q-018 (flipped)** and **ADR-007** (see `docs/architecture/decisions/ADR-007-offline-capture.md`).
+
+**Database impact: none — by design.** The pending capture queue is **client-side only** (device-local store on the mobile app), so:
+
+- No new tables, columns, indexes, functions, RLS policies, or storage objects.
+- No new migration was issued; migrations 001–013 and this report's review findings remain the complete, accurate record of the deployed schema.
+- The one thing the app relies on from the DB for offline sync is that **`transactions.id` (and child-row `id`s) accept client-generated UUIDs** — which the existing schema already supports (DEFAULT `gen_random_uuid()` only applies when the client omits `id`). Retried deferred confirms therefore insert the same `id` and are naturally idempotent (an `ON CONFLICT`/duplicate-aware path can be used if a partial write is ever seen).
+- Tenant isolation on reconnect is unchanged: the synced `business_id` must match the authenticated `auth.uid() → businesses.id` (RLS, BR-SEC-001), and the app purges local pendings on logout/delete/expiry/device-switch (FR-OFFLINE-006).
+
+Cross-references: `database-review.md` §15 note + §16 table (updated), ADR-007, FR-OFFLINE-001…008, BR-OFFLINE-001…008.
