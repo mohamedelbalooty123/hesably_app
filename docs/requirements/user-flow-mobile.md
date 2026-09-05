@@ -106,7 +106,7 @@ This is the most-used flow in the app and should be reachable in **one tap** fro
 
 | Situation | Expected behavior |
 |---|---|
-| No internet connection during capture | Out of MVP (resolved). Do not queue or process offline; show a clear message that internet access is required and allow retry. |
+| No internet connection during capture | **In MVP (Q-018 flipped): capture locally** as a pending capture (image + type + optional metadata). No error is shown; status "waiting for connection". AI processing/sync run on reconnect (manual "Sync now" and/or automatic). Read-only cached Home view while offline; offline never offers export/analytics/cross-device (BR-OFFLINE-008). |
 | AI returns low/no confidence on all fields | Treat as extraction failure → route to manual entry, don't force user to fix garbage data. |
 | User captures a non-receipt image (e.g., a random photo) | Gemini should return an empty/near-empty result → show "Couldn't read this as a receipt, try again or enter manually." |
 | Duplicate receipt (same photo/data submitted twice) | Not required for MVP, flag as a Phase 2 nice-to-have (simple hash check on image). |

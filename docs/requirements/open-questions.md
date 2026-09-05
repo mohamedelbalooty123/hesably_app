@@ -666,7 +666,7 @@ Confirms web edit/delete in MVP while keeping transaction creation mobile-only; 
 ## 10. UX / Product Decisions
 
 ### Q-018 — Offline Capture Handling (Phase 1 vs Phase 2)
-**Status:** Resolved
+**Status:** Resolved — **decision revised to IN MVP** (2026-09-05)
 
 **Original Question:**
 When there is no internet during receipt capture, should the MVP queue locally ("will process when back online") or simply block capture with a clear message? The document explicitly leaves this as a Phase 1 vs Phase 2 scope decision.
@@ -674,27 +674,31 @@ When there is no internet during receipt capture, should the MVP queue locally (
 **Why it matters:**
 Determines MVP offline behavior, storage, and sync design; directly impacts real-world usability for shop owners with unreliable connectivity.
 
-**Decision:**
-Offline receipt capture is **out of MVP**.
+**Decision (revised):**
+Offline receipt capture is **in MVP** — capture + deferred sync **only**. The MVP queues the captured receipt locally as a pending capture (client-side; no server schema change) and processes it (upload, AI, persistence) when connectivity returns.
 
 **MVP behavior:**
 When there is no network connection:
-- do not queue receipt processing
-- do not create an offline transaction pipeline
-- display a clear message explaining that internet access is required
-- allow the user to retry
+- capture the receipt locally (image + selected metadata) as a pending capture (FR-OFFLINE-001..002)
+- show a Pending list with status: pending / syncing / failed (FR-OFFLINE-003)
+- sync manually ("Sync now") and/or automatically when connectivity returns (FR-OFFLINE-004)
+- the AI trust invariant holds: extracted data is never saved without user confirmation (FR-OFFLINE-008, NFR-DATA-001)
+- cross-device sync, reports over unsynced data, offline AI/upload are NOT part of offline mode (FR-OFFLINE-007)
 
 **Future:**
-Offline capture + synchronization may be introduced in Phase 2.
+Extended sync (cross-device), conflict resolution, offline reports/analytics remain post-MVP.
 
-**Rationale:**
-Offline queueing introduces synchronization, retries, conflict resolution, local persistence, and recovery complexity that is unnecessary for the initial validation of the product.
+**Rationale (for reverse):**
+Capture is the highest-frequency action on the shop floor and frequently happens when connectivity is poor; making it online-only makes the core flow fail exactly when a customer is waiting. "Capture now, process later" needs no server feature (only a local queue + idempotent sync), so MVP cost is small relative to the failure mode it removes. The AI-confirmation and account-isolation invariants must, and do, extend to the offline queue.
 
 **Product Impact:**
-Resolves the pending scope decision in favor of block-with-clear-message for MVP; offline capture remains a Phase 2 feature.
+Offline capture + deferred sync is now an MVP capability (Q-018 flipped); Phase 2 retains extended sync/conflict handling. Documented in ADR-007; comprehensive scope change is tracked in `docs/change-management/offline-mvp-change-impact.md`.
 
 **Affected Requirements:**
-- FR-CAPTURE-001 (capture), BR-MVP-004
+- FR-OFFLINE-001..008 (new), BR-MVP-004 (revised), BR-OFFLINE-001..008 (new), AC-OFFLINE-001..007 (new); FR-CAPTURE-001 (capture)
+
+**Original rationale (superseded):**
+Offline queueing introduces synchronization, retries, conflict resolution, local persistence, and recovery complexity that was considered unnecessary for the initial validation of the product.
 
 **Source Reference:**
 - user-flow-mobile.md — Edge Cases & Error States (No internet connection during capture)

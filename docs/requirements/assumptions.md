@@ -198,3 +198,15 @@ The mobile document states the confirmation dialog is the only safeguard in the 
 
 **Source evidence:**
 - user-flow-mobile.md — Edge Cases & Error States
+
+### ASM-017 — Offline Pending Captures Are Device-Local Only
+**Assumption:**
+Offline pending captures are stored and managed **client-side on the device**; there is no server copy before sync, they do not survive reinstall (no server backup), and the already-deployed Supabase schema requires no change for this capability.
+
+**Why this assumption exists:**
+Offline capture + deferred sync (Q-018, flipped to MVP) is implemented as a local queue with idempotent sync (ADR-007). Because the database is already implemented, the pending-capture state is a mobile-only concept rather than a new server table/state.
+
+**Source evidence:**
+- ADR-007 — Offline Receipt Capture
+- open-questions.md — Q-018 (decision revised IN MVP)
+- database-review.md — pending capture is client-side; schema unchanged

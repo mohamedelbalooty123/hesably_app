@@ -393,12 +393,13 @@ Duplicate receipt detection (hash check on image) is not required for MVP; it is
 - Source: user-flow-mobile.md — Edge Cases & Error States
 - Classification: POST-MVP
 
-### BR-MVP-004 — Offline Capture Out of MVP
-Offline receipt capture (queue + sync) is **out of the MVP** (resolved per Q-018). When there is no network connection, the MVP does not queue receipt processing and does not create an offline transaction pipeline; instead it shows a clear message that internet access is required and allows the user to retry. Offline capture + synchronization may be introduced in Phase 2.
+### BR-MVP-004 — Offline Capture In MVP
+Offline receipt capture (queue + deferred sync) **is in the MVP** (Q-018 flipped to IN MVP). With no network connection, the MVP captures the receipt and stores it locally as a pending capture; AI processing and sync run when connectivity returns. A clear "waiting for connection" status is shown and retry is available. The offline boundary covers **capture + deferred sync only** — AI extraction, storage upload, server persistence, cross-device sync, and reports reflecting unsynced data are online-only (FR-OFFLINE-007).
 
 - Source: user-flow-mobile.md — Edge Cases & Error States
-- Decision: Q-018 (open-questions.md)
-- Classification: MVP (behavior); POST-MVP (offline feature)
+- Decision: Q-018 (open-questions.md) — flipped IN MVP; ADR-007
+- Related: BR-OFFLINE-001..008, BR-MVP-006, NFR-DATA-001
+- Classification: MVP
 
 ### BR-MVP-005 — Web Manual "Add Transaction" Not Required in MVP
 A web "Add Transaction" button for manual desktop entry is optional and not required for MVP; it can be deferred to Phase 2.
@@ -410,3 +411,56 @@ A web "Add Transaction" button for manual desktop entry is optional and not requ
 Phase 2 and Phase 3 features (per feature-list.md) are not treated as MVP requirements.
 
 - Source: feature-list.md — Phase 2 / Phase 3 headings
+- Note: Offline capture was moved from Phase 2 into Phase 1 MVP (Q-018 flipped) — see BR-MVP-004 and BR-OFFLINE-001.
+
+---
+
+## 13. Offline Capture Rules
+
+### BR-OFFLINE-001 — Capture Is Local-First
+Capturing a receipt (camera or gallery) never requires connectivity; the image and chosen metadata are stored on-device as a pending capture.
+
+- Source: ADR-007
+- Related: FR-OFFLINE-001, FR-OFFLINE-002
+
+### BR-OFFLINE-002 — Deferred Idempotent Sync
+Pendings sync when connectivity is available (manual "Sync now" and/or automatically when the connection returns). Sync is idempotent: each pending capture carries a client-generated UUID, and re-syncing an already-synced UUID is a no-op (no duplicates).
+
+- Source: ADR-007
+- Related: FR-OFFLINE-004, FR-OFFLINE-005
+
+### BR-OFFLINE-003 — Pending Status Is Visible
+Unsynced captures appear in a Pending list with an explicit status (pending / syncing / failed) and may be retried or deleted locally before syncing.
+
+- Source: ADR-007
+- Related: FR-OFFLINE-003
+
+### BR-OFFLINE-004 — No Offline Bypass of AI Confirmation
+Offline flow never bypasses the AI trust invariant (BR-CONFIRM-001, NFR-DATA-001): AI extraction runs only online and its output always routes through the review/confirm step before persistence.
+
+- Source: ADR-007
+- Related: FR-OFFLINE-008, BR-CONFIRM-001, BR-AI-001
+
+### BR-OFFLINE-005 — Online-Only Capabilities
+AI extraction, storage upload, server-side persistence, cross-device sync, and reports over unsynced data require connectivity; offline mode never fabricates these.
+
+- Source: ADR-007
+- Related: FR-OFFLINE-007
+
+### BR-OFFLINE-006 — Pending Capture Account Isolation
+Pending captures are bound to the current owner identity. Logout, account deletion, token expiry, reinstall, or device switch must never expose a pending capture to a different account (RLS invariant extended to the local queue).
+
+- Source: ADR-007
+- Related: FR-OFFLINE-006, BR-SEC-001, BR-SEC-002
+
+### BR-OFFLINE-007 — Sync Retry Is Not Conflict Resolution
+"Sync failed / retry" and "data changed meanwhile" are distinct concerns. Server data uses last-write-wins (BR-TRANS-006); no conflict-resolution/merge UI in MVP.
+
+- Source: ADR-007
+- Related: BR-TRANS-006
+
+### BR-OFFLINE-008 — No Offline Inventiveness
+Offline mode is capture + deferred sync only. A read-only cache of previously loaded data may be shown in Home but must never imply cloud sync or current status; offline windows never offer export, analytics, or cross-device access.
+
+- Source: ADR-007
+- Related: FR-OFFLINE-007, BR-EXPORT-001

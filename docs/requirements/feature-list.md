@@ -18,6 +18,7 @@
 - In-app camera capture (primary) + option to pick an existing photo from gallery.
 - Basic image quality check before upload (blurry/too-dark warning, optional retake prompt).
 - Support capturing both **sales receipts issued to customers** and **purchase invoices from suppliers** — user picks a type before/after capture (maps to Egypt's e-receipt vs e-invoice distinction later).
+- **Offline capture (in MVP, Q-018 flipped):** capture receipts with no internet; store locally as a pending capture and sync + AI-process when back online — capture + deferred sync only (offline AI/upload/reports are not part of offline mode).
 
 ### 3. AI Data Extraction
 - Send captured image to Gemini Vision API.
@@ -68,7 +69,6 @@
 - Recurring transaction templates (e.g., monthly rent auto-suggested).
 - Low-stock / reorder suggestions based on purchase patterns (ties into inventory forecasting idea explored earlier).
 - Push notifications: reminders to log daily sales, monthly report ready, unusual spending alert.
-- Basic offline mode: capture receipts offline, sync + AI-process when back online.
 
 ## Phase 3 — Future / Vision
 

@@ -70,9 +70,8 @@ Post-MVP features are defined in `feature-list.md` Phase 2 and are **not** part 
 - Recurring transaction templates.
 - Low-stock / reorder suggestions.
 - Push notifications (reminders, report ready, unusual spending alerts).
-- Basic offline mode (capture offline, sync + AI-process when online).
 
-See `open-questions.md` where these boundaries interact with MVP descriptions (e.g., offline capture handling).
+See `open-questions.md` where these boundaries interact with MVP descriptions.
 
 ### 4.3 Future Vision
 
@@ -92,7 +91,7 @@ The following are explicitly out of scope for the MVP (per `feature-list.md`):
 - Multi-currency support.
 - Direct government tax filing/submission (Phase 2 at earliest, and only after legal/compliance review).
 
-Additionally, the duplication detection feature (hash check) and offline capture during the capture flow are identified in `user-flow-mobile.md` as not required for MVP. Offline capture is resolved as **out of MVP** (Per Q-018: block capture with a clear message when offline).
+Additionally, the duplication detection feature (hash check) is identified in `user-flow-mobile.md` as not required for MVP. **Offline capture is in MVP** (per Q-018 flipped decision): capture works without connectivity and defers AI processing + sync until the device is back online (FR-OFFLINE-001..008).
 
 ---
 
@@ -228,6 +227,55 @@ The system shall allow the user to skip AI entirely and enter a transaction manu
 
 - Classification: MVP
 - Source: feature-list.md — Review & Edit; user-flow-mobile.md — Section 2, step 3 (Option C)
+
+#### FR-OFFLINE-001 — Offline Capture
+The system shall allow the user to capture a receipt (camera or gallery) with no internet connection; capture never requires connectivity.
+
+- Classification: MVP
+- Source: feature-list.md — Phase 1 §2 Receipt Capture; Q-018 (flipped to MVP); ADR-007
+
+#### FR-OFFLINE-002 — Local Pending Storage
+The system shall store the captured image and chosen metadata locally on-device as a pending capture until it can be synced.
+
+- Classification: MVP
+- Source: ADR-007; mobile-architecture.md — Offline
+- Decision: pending captures are a client-side concept; no database schema change (database-review.md; ADR-007)
+
+#### FR-OFFLINE-003 — Pending Capture List
+The system shall show a "Pending" list of unsynced captures with a visible status (pending / syncing / failed) and allow the user to view or delete a pending capture before it syncs.
+
+- Classification: MVP
+- Source: ux/ux-states.md — Offline states; ux/screen-inventory.md — SCR-16
+
+#### FR-OFFLINE-004 — Deferred Sync (Manual + Auto)
+The system shall sync pending captures when connectivity is available — via explicit "Sync now" and/or automatically when the connection returns — and shall surface sync failures with a retry option.
+
+- Classification: MVP
+- Source: Q-018 (flipped to MVP); ADR-007
+
+#### FR-OFFLINE-005 — Idempotent Sync (Duplicate Prevention)
+Each pending capture shall carry a client-generated UUID; syncing an already-synced UUID shall be a no-op so retries never create duplicates.
+
+- Classification: MVP
+- Source: ADR-007; data-access-contracts.md — §3.4
+
+#### FR-OFFLINE-006 — Pending Capture Account Isolation
+Pending captures shall be bound to the current owner identity and shall never be visible to or syncable under a different account; logout, account deletion, token expiry, reinstall, or device switch shall never leak a pending capture across accounts.
+
+- Classification: MVP
+- Source: ADR-007; NFR-SEC-001 (RLS invariant extended to local pending state)
+
+#### FR-OFFLINE-007 — Online-Only Processing Boundary
+AI extraction, storage upload, and server-side persistence shall require connectivity; offline mode covers capture + deferred sync only, never offline AI, offline upload, offline reports, or offline cross-device sync.
+
+- Classification: MVP
+- Source: ADR-007; Q-018 (flipped to MVP)
+
+#### FR-OFFLINE-008 — No Offline Bypass of AI Review
+Offline flow shall never bypass the AI trust invariant: AI-extracted data is processed only online and is never saved without user confirmation (NFR-DATA-001).
+
+- Classification: MVP
+- Source: ADR-004; ADR-007; NFR-DATA-001
 
 ### 5.4 AI Data Extraction
 
@@ -878,7 +926,7 @@ Business profile (name, type) editable, syncs with mobile; Web Access (view/unli
 
 | Situation | Expected behavior | Classification |
 |---|---|---|
-| No internet connection during capture | Offline capture (queue + sync) is **out of MVP**. On no network: do not queue processing, show a clear message that internet access is required, and allow retry. | MVP (resolved per Q-018) |
+| No internet connection during capture | Offline capture **is in MVP** (queue + sync, per Q-018 flipped): the receipt is captured and stored locally as a pending capture; AI processing/sync run when connectivity returns. A clear "waiting for connection" status is shown and retry is available. | MVP |
 | AI returns low/no confidence on all fields | Treat as extraction failure → route to manual entry | MVP |
 | User captures a non-receipt image | Gemini returns empty/near-empty → "Couldn't read this as a receipt, try again or enter manually" | MVP |
 | Duplicate receipt (same photo/data twice) | Not required for MVP — Phase 2 nice-to-have (simple hash check) | POST-MVP |
@@ -956,6 +1004,7 @@ The app shall remain lightweight and avoid heavy animations, to work well on mid
 | Authentication | FR-AUTH-001 … 007 | 7 |
 | Business Onboarding | FR-ONBOARD-001 … 005 | 5 |
 | Receipt Capture | FR-CAPTURE-001 … 007 | 7 |
+| Offline Capture | FR-OFFLINE-001 … 008 | 8 |
 | AI Data Extraction | FR-AI-001 … 009 | 9 |
 | Review and Edit | FR-REVIEW-001 … 007 | 7 |
 | Categories | FR-CATEGORY-001 … 005 | 5 |
@@ -971,7 +1020,7 @@ The app shall remain lightweight and avoid heavy animations, to work well on mid
 | Web Settings | FR-WEB-SETTINGS-001 … 003 | 3 |
 | Non-Functional | NFR-LANG-001, NFR-PERF-001, NFR-SEC-001, NFR-SEC-002, NFR-DATA-001, NFR-LOWDEV-001 | 6 |
 
-**Total MVP functional + non-functional requirements: 101**
+**Total MVP functional + non-functional requirements: 109**
 
 ### Post-MVP / Future / Out-of-Scope Feature Index
 
@@ -982,7 +1031,6 @@ The app shall remain lightweight and avoid heavy animations, to work well on mid
 | Recurring transaction templates | POST-MVP | feature-list.md — Phase 2 |
 | Low-stock / reorder suggestions | POST-MVP | feature-list.md — Phase 2 |
 | Push notifications | POST-MVP | feature-list.md — Phase 2 |
-| Basic offline mode | POST-MVP | feature-list.md — Phase 2 |
 | Duplicate receipt hash check | POST-MVP | user-flow-mobile.md — Edge Cases |
 | Web "Add Transaction" (manual desktop entry) | POST-MVP | user-flow-dashboard.md — Section 3, step 6 |
 | Web/mobile real-time sync (last-write-wins) | POST-MVP | user-flow-dashboard.md — Edge Cases |
