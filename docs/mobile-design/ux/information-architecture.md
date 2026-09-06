@@ -40,7 +40,7 @@ Plus a **global task flow** that is not an area: **Add Transaction** (إضافة
 
 - **Transactions: chronological, grouped by date**, most recent first (FR-TRANS-002). Primary access path is time.
 - **Home: one fixed period** (current month) to guarantee a glanceable answer (FR-DASH-001).
-- **Reports: period-driven** — the unified selector This Week / This Month / Last Month / YTD / Custom (Q-011) is the organizing axis.
+- **Reports: period-driven** — the unified selector This Week / This Month / Last Month / Year-to-Date / Custom Range (Q-011) is the organizing axis.
 - **Categories: alphabetical (per backend order) within two groups** — defaults first, then custom (category-contracts §3).
 - **Settings: grouped by concern** — Account/Business, Data (categories), Access (web), Language, and Safety (logout / delete).
 

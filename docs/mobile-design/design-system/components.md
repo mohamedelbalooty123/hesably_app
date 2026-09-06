@@ -121,10 +121,10 @@ Each component below documents: **purpose · variants · states · anatomy · us
 
 ## Segmented Control — period selector (SCR-11)
 
-- **Purpose:** unified period choice (This Week / This Month / Last Month / YTD / Custom) — interaction-model §4 / Q-011.
+- **Purpose:** unified period choice (This Week / This Month / Last Month / Year-to-Date / Custom Range) — interaction-model §4 / Q-011.
 - **Anatomy:** equal segments, selected = primary-container fill + primary text; unselected on surface-variant.
 - **States:** default, selected, disabled (rare), focused. Scrollable horizontally if labels overflow on 360dp.
-- **Rules:** exactly the five Q-011 options; Custom opens OVR-03.
+- **Rules:** exactly the five Q-011 options; Custom Range opens OVR-03.
 - **Anti-patterns:** a dropdown hamburger instead of visible segments; extra periods beyond Q-011.
 
 ## Link / text action

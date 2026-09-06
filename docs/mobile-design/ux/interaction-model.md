@@ -55,7 +55,7 @@ Accessibility: every field has a visible label (not placeholder-only); errors ar
 |---|---|
 | Transaction type (SCR-08) | Two large cards; selection is immediate; no disabled state — a type choice is always required to proceed (FR-CAPTURE-002/006) |
 | Category (OVR-01) | Bottom-sheet list from SCR-10: defaults group then customs; optional search; rows show name + (AI suggestion badge when suggested); selection collapses sheet and fills the form |
-| Period selector (SCR-11) | Segmented control + "Custom" that opens OVR-03; selection re-renders the report immediately |
+| Period selector (SCR-11) | Segmented control + "Custom Range" that opens OVR-03; selection re-renders the report immediately |
 | Date range (OVR-03) | Start/end pickers; same-period validation (start ≤ end) |
 | Business type (SCR-04/13) | Radio list (Retail / Restaurant / Pharmacy / Service / Other) — matches `business_types` domain (auth/business-contracts §2.2) |
 

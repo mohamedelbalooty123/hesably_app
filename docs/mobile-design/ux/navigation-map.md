@@ -88,7 +88,7 @@ Transactions tab (SCR-06): filters + search + grouped chronological list
 ## 5. Reports → Export
 
 ```
-Reports tab (SCR-11): period selector (This Week / This Month / Last Month / YTD / Custom)
+Reports tab (SCR-11): period selector (This Week / This Month / Last Month / Year-to-Date / Custom Range)
    → Export (OVR-02): format (PDF / Excel / CSV) + period (defaults to current selection, Q-014)
    → generate client-side → share sheet (FR-EXPORT-004)
    → Custom Range → OVR-03 date-range picker → Reports view re-renders
