@@ -52,7 +52,7 @@ Where requirements and contracts conflict, the **acceptance criteria and resolve
 | Low/mid-spec Android — lightweight, no heavy animation | `ux-strategy.md` principles, `interaction-model.md` performance |
 | Offline capture: **device-local pending queue + deferred sync** (MVP; Q-018 flipped, ADR-007) | `ux-states.md` offline + pending machine, `interaction-model.md` errors, `navigation-map.md` add flow, `user-journeys.md` J13 |
 | Web dashboard is companion only; creation mobile-only | `navigation-map.md` (scope boundary) |
-| Unified report periods: This Week / This Month / Last Month / YTD / Custom | `info-architecture.md`, `screen-inventory.md` (Reports) |
+| Unified report periods: This Week / This Month / Last Month / Year-to-Date / Custom Range | `info-architecture.md`, `screen-inventory.md` (Reports) |
 
 ---
 
