@@ -102,9 +102,9 @@
 
 ---
 
-## J10 — Custom period report
+## J10 — Custom Range report
 
-1. Reports → period selector → Custom → OVR-03 date-range picker → picks start/end.
+1. Reports → period selector → Custom Range → OVR-03 date-range picker → picks start/end.
 2. Reports re-renders for the range; export (if any) honors it (FR-DASH-004…007, report-contracts §7).
 
 **Goal:** G5 | **Anchor:** AC-REPORT-03/04.

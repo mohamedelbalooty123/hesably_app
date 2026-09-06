@@ -104,7 +104,7 @@ Design decisions in this system trace back to approved requirements and UX archi
 |---|---|---|
 | Q-001 | Phone + OTP auth only | `forms-controls.md` (OTP §7), `rtl-localization.md` (§7) |
 | Q-008 | Review & Save mandatory before persistence | `ai-patterns.md` (§3), `components.md` (SCR-10) |
-| Q-011 | Report period options (Today/Week/Month/Quarter/Custom) | `components.md` (segmented), `financial-ui.md` |
+| Q-011 | Report period options (This Week / This Month / Last Month / Year-to-Date / Custom Range) | `components.md` (segmented), `financial-ui.md` |
 | Q-012 | EGP `1,250.50 ج.م` format; Latin digits | `financial-ui.md`, `tokens.md`, `typography.md` |
 | Q-014 | Export respects current filters | `financial-ui.md` (§9), `components.md` (OVR-02) |
 | Q-018 | Offline capture IN MVP (flipped) | `offline-patterns.md`, `ai-patterns.md` (§8) |
@@ -143,6 +143,6 @@ All offline requirements (FR-OFFLINE-001–008), acceptance criteria (AC-OFFLINE
 
 **DESIGN SYSTEM STATUS:** APPROVED (all 17 files complete; quality gate passed)
 
-**Stitch readiness:** READY — `stitch-handoff.md` provides screen order, token config, and prompt templates.
+**Stitch readiness:** READY WITH BRAND APPROVAL PENDING — `stitch-handoff.md` provides screen order, token config, and prompt templates. Brand values (`#0A7A3D`, Cairo) are confirmed as the design baseline for prototyping; formal brand approval is pending. All values are internally consistent for Stitch consumption.
 
 **Flutter readiness:** READY — `flutter-handoff.md` provides theme setup, component mapping, RTL handling, and low-end constraints.
