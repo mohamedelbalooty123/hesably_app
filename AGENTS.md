@@ -98,6 +98,23 @@
 ## Requirements doc gotcha
 `docs/requirements/user-flow-mobile.md` has ~14 lines of unrelated AI-assistant promotional text at the top (junk that leaked into the commit); the actual spec starts at line 15 (`# User Flow — Mobile App`). Don't treat that junk as content.
 
+## Stitch visual design workflow
+
+Hesably UI mockups are designed in **Google Stitch**. The agent has Playwright browser MCP access to the Stitch project (user-granted, logged-in Chrome).
+
+- **Stitch project id**: `projects/661013469764921318` (Hesably — Smart Invoice Assistant)
+- **Design system**: `assets/7976229305596122358` ("Hesably Design System"). Theme: light, roundness ROUND_FOUR, primary custom color `#0A7A3D`; Cairo is proxied via Inter (Stitch has no Cairo). The `designMd` captures the full token set from `docs/mobile-design/design-system/`.
+- Visual design work: `docs/mobile-design/design-system/stitch-handoff.md` is the source of truth for what/how to design. Generation/edit via Stitch MCP takes minutes and often returns `-32001` timeouts — those calls still run in background; verify by polling `get_screen` or re-checking `edit_screens` DOM operations.
+
+### Mandatory visual QA step (before ANY Stitch design batch is marked done)
+The model cannot view images through the normal toolchain, but it CAN via Playwright + Chrome (user-granted access to the Stitch project). So, after generating/editing screens in Stitch:
+
+1. Open the Stitch project in Chrome via Playwright browser tools.
+2. Navigate to each screen in the batch; screenshot it (mobile viewport ~393×852 and/or the Stitch canvas).
+3. Verbally inspect the screenshots for consistency vs the design-system tokens, RTL layout, Arabic copy (no English placeholders), repeated elements (nav bars, buttons, app bars), and exact copy wording.
+4. Correct any violations via Stitch MCP `edit_screens`, then re-screenshot to confirm.
+5. Do NOT claim a batch is "visually confirmed" without this browser review.
+
 ## Git Workflow Contract (mandatory for all agents)
 
 Every code/doc change MUST flow through disciplined version control. Follow these rules on **every task** — if the task was implemented successfully, you commit, push, and open a pull request automatically (no need to ask).
