@@ -1,262 +1,196 @@
 # Implementation Handoff — Hesably Flutter Mobile App
 
 > **Date**: 2026-09-18
-> **Phase**: Initial Implementation Handoff
-> **Produced by**: Antigravity (Implementation Readiness Audit)
+> **Phase**: App Foundation & Boot Sequence — COMPLETED
+> **Produced by**: OpenCode (Foundation Phase)
 
 ---
 
 ## Visual Source Declarations
 
-> **"THE NEW STITCH PROJECT IS THE ONLY VISUAL SOURCE OF TRUTH FOR THE HESABLY MOBILE UI."**
+> **"THE STITCH PROJECT IS THE ONLY VISUAL SOURCE OF TRUTH FOR THE HESABLY MOBILE UI."**
 
 > **"docs/mobile-design/ IS HISTORICAL/DEPRECATED AND MUST NOT OVERRIDE THE APPROVED STITCH DESIGN."**
 
 > **"docs/mobile-app/ IS THE CURRENT FLUTTER IMPLEMENTATION ARCHITECTURE AUTHORITY."**
 
+> **Current Stitch project**: `661013469764921318` — "Hesably — Smart Invoice Assistant" (old project `13492244755370590843` is STALE).
+
 ---
 
-## 1. Current Flutter Foundation Status
+## 1. Flutter Foundation Status (post-foundation-phase)
 
 | Item | Status | Notes |
 |---|---|---|
-| Flutter project initialized | ✅ Complete | `apps/mobile/` — package: `hesably`, bundle: `com.hesably` |
-| `pubspec.yaml` configured | ✅ Complete | Core dependencies added |
-| `main.dart` foundation | ✅ Complete | `HesablyApp` + `MaterialApp` with M3 seed `#0A7A3D` |
-| Dependency resolution | ✅ Clean | `flutter pub get` resolves with no errors |
+| Flutter project initialized | ✅ Complete | `apps/mobile/` — package: `hesably` |
+| `pubspec.yaml` configured | ✅ Complete | + `flutter_localizations`, `shared_preferences ^2.3.0`, `intl: any`, Cairo fonts |
+| Boot sequence | ✅ Complete | `main.dart` → `bootstrap()` → env → DI → (Supabase) → `runApp` |
+| Environment config | ✅ Complete | `AppEnvironment` — `--dart-define` wins, `.env` via `flutter_dotenv` fallback; `.env.example` present |
+| DI / injectable | ✅ Complete | `getIt` + `injectable`, generated `injection.config.dart`, `SharedPreferences` pre-resolved |
+| GoRouter shell | ✅ Complete | 4-tab `StatefulShellRoute.indexedStack` (Home/Tx/Reports/Settings) + placeholder screens |
+| Theming | ✅ Complete | `AppTheme.light` — M3 from seed `#0A7A3D`, verified tokens copied over, Cairo text theme, 48dp controls, RTL-ready |
+| Localization | ✅ Complete | `.arb` via `flutter_localizations` + `gen_l10n` — Arabic template, English secondary (see §2) |
+| Cairo fonts | ✅ Complete | `assets/fonts/Cairo-{400,500,600,700}.ttf` bundled (Google Fonts static, valid TTFs) |
+| Supabase initialization | ✅ Complete | Guarded — only when backend configured (`.env` or dart-define present) |
+| Core scaffolding | ✅ Complete | `lib/core/` — `EgCurrency` (`1,250.50 ج.م`), error foundation (`AppFailure` + `mapError`), string extensions |
+| Feature directories | ✅ Complete | `lib/features/{auth,home,transactions}/…` scaffolded with `.gitkeep` |
 | Static analysis | ✅ 0 issues | `flutter analyze` — No issues found |
-| Test directory | ⚠️ Missing | `test/` not created; no test runner available yet |
-| Directory structure | ⚠️ Partial | `lib/` contains only `main.dart` — `app/`, `core/`, `features/` not yet scaffolded as real dirs |
-| `.env` file | ⚠️ Missing | `flutter_dotenv` is a declared dependency but no `.env` file exists |
-| Localization setup | ❌ Not done | `flutter_localizations` not in `pubspec.yaml`; no `.arb` files |
-| Cairo / Tajawal fonts | ❌ Not done | `pubspec.yaml` has no font declarations; Google Fonts dependency not added |
-| GoRouter setup | ❌ Not done | `go_router` declared but no router file exists |
-| Supabase initialization | ❌ Not done | `supabase_flutter` declared but no init call in `main.dart` |
-| DI/injectable setup | ❌ Not done | `get_it`/`injectable` declared but no DI setup exists |
-| Feature directories | ❌ Not done | `lib/features/` does not exist yet |
-| RTL `textDirection` | ❌ Not done | `MaterialApp` does not declare `locale` or `Directionality` |
+| Tests | ✅ 14 passing | env, theme, currency, error, app-shell widget tests |
+| Build | ✅ Passes | `flutter build web --debug` — Built successfully |
+| RTL `textDirection` | ✅ Complete | `locale: Locale('ar')` + `supportedLocales`; direction resolves from locale |
 
 ---
 
-## 2. Architecture Summary
+## 2. Localization Decision (resolved conflict)
 
-The project follows a **Feature-First Clean Architecture** with the following layer contract:
+Architecture doc `docs/architecture/mobile-architecture.md` §15 prescribes **easy_localization**; docs `docs/mobile-app/localization.md` + this task prescribe **flutter_localizations + .arb**.
 
-```
-Presentation (Cubit / Widget)
-    ↓  calls
-Domain (UseCase / Entity / Repository Interface)
-    ↓  implemented by
-Data (DataSource / RepositoryImpl / Model)
-    ↓  delegates to
-External (Supabase / Local DB / Storage)
-```
+**DECISION: `.arb` / gen_l10n** (Flutter first-party).
 
-Each feature lives at: `lib/features/<feature_name>/{data,domain,presentation}/`
+- The task spec (highest authority, user instruction) explicitly prescribes `.arb`.
+- `.arb` integrates with `flutter gen-l10n`, `flutter_localizations`, and Material localizations without a third-party package.
+- Divergence from the architecture doc is intentional and recorded here; `mobile-architecture.md` is NOT edited (historical). Update the architecture doc when the Architecture phase is revisited.
 
-Shared infrastructure lives at: `lib/core/`
-
-App-level bootstrap lives at: `lib/app/`
-
-### Critical Architecture Rules
-1. **Supabase calls** are only allowed inside `DataSource` classes — never in widgets or domain.
-2. **State** is managed via `flutter_bloc` Cubit (preferred) or Bloc for complex event streams.
-3. **Navigation** uses `go_router` with centralized route guards in `lib/app/router/`.
-4. **DI** uses `get_it` + `injectable`. No manual `new` for services.
-5. **Errors** are mapped to `Failure` sealed classes; domain returns `Either<Failure, T>` via `fpdart`.
-6. **Secrets** use `--dart-define` or `.env` via `flutter_dotenv`. Gemini API key MUST NOT exist in the Flutter client.
-7. **UI strings** use `.arb` files via `flutter_localizations` — no hardcoded Arabic strings in widgets.
-8. **Colors** are accessed only via `Theme.of(context).colorScheme.*` — never raw hex values in widgets.
+Setup: `l10n.yaml` (template `app_ar.arb`, class `AppLocalizations`, `nullable-getter: false`). Arabic-first; runtime toggle deferred to Settings feature. `intl: any` per Flutter gen_l10n guidance (resolves to 0.20.2).
 
 ---
 
-## 3. Approved Design System Tokens (from Stitch)
+## 3. Approved Design Tokens (from CURRENT Stitch project `661013469764921318`)
 
 | Token | Value | Role |
 |---|---|---|
-| Primary | `#004328` | Main brand, interactive controls |
-| Primary Container | `#0D5C3A` | App bar, FAB |
-| Secondary | `#006D37` | Positive cash flow, verified state |
-| Error | `#BA1A1A` | Destructive actions only |
-| Surface | `#FAF8FF` | Canvas / page background |
-| AI / Warning | `#F59E0B` (Tertiary) | Low-confidence AI fields, pending sync |
-| Headline Font | **Cairo** | All financial numbers, Arabic headings |
-| Label Font | **Tajawal** | Chips, status tags, compact labels |
-| RTL | **Always-on** | `textDirection: TextDirection.rtl` |
-| Reference Viewport | 390 × 852 dp | Design baseline |
+| Primary | `#0A7A3D` | Main brand, interactive controls |
+| On Primary | `#FFFFFF` | Text/icons on primary |
+| Background (canvas) | `#FAFAF8` | Page background (reduces glare) |
+| Surface | `#FFFFFF` | Cards, sheets |
+| On Background / Surface | `#191C19` | Primary text |
+| Outline | `#6F7A6E` | Secondary borders |
+| Outline Variant | `#D0CFC8` | Default input borders, dividers |
+| Secondary | `#5E5F59` | Neutral accents |
+| Error | `#BA1A1A` | Destructive actions |
+| Surface Container Low | `#F3F4EF` | Muted container surfaces |
+| Surface Container | `#EDEEE9` | Raised container surfaces |
+| Pending / Warning | `#F59E0B` (derived) | Low-confidence AI, pending sync ("Green for paid, Amber for pending") |
+| Headline Font | **Cairo** (700/600) | Arabic financial numbers, headings |
+| Body Font | **Cairo** (400) | Body copy |
+| Label Font | **Cairo** (600/500) | Chips, labels — **Tajawal dropped** |
+| RTL | **Always-on** | `locale: Locale('ar')` → RTL direction |
+| Reference Viewport | 390 × 884 dp (Phone Entry 390 × 852) | Design baseline |
 | Touch Target Min | 48 dp | All primary interactive controls |
+| Roundness | 8 dp buttons/cards/inputs | Per Kinetic token sheet |
 
-> **Note on primary color**: Stitch uses `#004328` as `primary` and `#0D5C3A` as `primary-container`. The current `main.dart` uses `#0A7A3D` as the seed. This needs to be updated to match the approved Stitch token exactly during the app foundation task.
+> **Token migration complete**: `#004328` / `#0D5C3A` / `#006D37` / `#FAF8FF` / Tajawal from the OLD project are obsolete — do NOT use. Stitch proxies Cairo with Inter strictly for rendering; the app bundles real Cairo.
 
 ---
 
 ## 4. Stitch Screen Mapping
 
-Full mapping is in: [`docs/mobile-app/stitch-screen-map.md`](./stitch-screen-map.md)
+Full mapping in: [`docs/mobile-app/stitch-screen-map.md`](./stitch-screen-map.md)
 
-**Summary:**
-- **Stitch Project**: `13492244755370590843` — "Full Application Design Review"
-- **Total screens in Stitch canvas**: 35 screen instances
-- **Primary visual screens mapped**: 30 (primary screens + overlays)
-- **Overlays/dialogs/sheets mapped**: 8 (OVR-01 through OVR-08)
-- **Non-screen reference entries excluded**: 9 (uploaded docs + logo + design system assets)
-- **Unresolved mappings**: **0**
+**Summary (current project `661013469764921318`):**
+- Canvas instances: **36**
+- UI implementation targets: **33** (screens with HTML)
+- Non-UI assets: **2** (brand icon, ledger illustration)
+- Design system instance: **1** (Kinetic Finance RTL token sheet)
+- Covered flows: Splash, Phone Login, OTP, Business Setup, Home (loaded/empty/offline ×13), Transactions (list/type/detail/search ×14), Receipt AI Processing, Review & Save
+- **Canvas gaps**: Reports, Settings, Categories, Receipt viewer, standalone Pending queue — documented product features, awaiting visuals
 
 ---
 
-## 5. Implementation Sequence
+## 5. Implementation Sequence (post-foundation)
 
-Dependency-ordered sequence for the next phase. Do NOT begin until this handoff is accepted.
+Foundation is **complete**. Remaining phases (unchanged, dependency-ordered):
 
 | Phase | Feature | Key Screens | Depends On |
 |---|---|---|---|
-| 1 | **App Foundation** | — | Nothing — must be first |
-| 2 | **Authentication** | SCR-01/02 Splash, SCR-03 Login, SCR-04 OTP Verify | Foundation |
-| 3 | **Business Setup** | SCR-04b Business Setup | Auth (new user guard) |
-| 4 | **Main Navigation Shell** | Bottom nav (Home/Tx/Reports/Settings) | Auth guard, Router |
-| 5 | **Home** | SCR-05 Loaded, SCR-05c Empty | Navigation shell |
-| 6 | **Receipt Capture (Online)** | SCR-09 Capture | Camera plugin, Foundation |
-| 7 | **Offline Queue / Sync** | SCR-14 Pending Queue | Capture, Local DB |
-| 8 | **AI Extraction Edge Function** | (server-side) | Supabase Edge Fn |
-| 9 | **AI Review & Confirmation** | SCR-10 Review, OVR-08 Low-Confidence | AI Extraction |
-| 10 | **Transactions** | SCR-06 List/Empty/Filtered, SCR-07 Detail, SCR-08 Type | Home, Review |
-| 11 | **Categories** | SCR-13 Management, SCR-15 Add/Rename, OVR-01 Picker | Transactions |
-| 12 | **Reports** | SCR-11 Empty, SCR-12 Loaded, OVR-02 Export, OVR-03 Date Range | Transactions |
-| 13 | **Settings** | SCR-16 Web Access, SCR-18 Settings, OVR-05/06 dialogs | Auth |
-| 14 | **Receipt Viewer** | SCR-17 Viewer | Transactions |
-| 15 | **Final Hardening** | All OVR dialogs, RTL validation, a11y, perf | Everything |
+| 2 | **Authentication** | Splash, Phone Login, OTP Verify | Foundation ✅ |
+| 3 | **Business Setup** | Business Setup (Refined + Form) | Auth (new user guard) |
+| 4 | **Main Navigation Shell** | Bottom nav (already shelled in foundation) | Auth guard, Router ✅ |
+| 5 | **Home** | Dashboard Loaded, Empty, Offline, Offline Pending | Navigation shell |
+| 6 | **Receipt Capture (Online)** | SCR-09 Capture (Receipt AI Processing) | Camera plugin |
+| 7 | **Offline Queue / Sync** | Home Offline Pending states | Capture, Local DB |
+| 8 | **AI Extraction Edge Function** | (server-side, `extract-receipt`) | Supabase Edge Fn |
+| 9 | **AI Review & Confirmation** | Review & Save — AI Draft State | AI Extraction |
+| 10 | **Transactions** | List Populated/Empty/Search-empty, Type Selection, Detail | Home, Review |
+| 11 | **Categories** | (no canvas yet) | Transactions |
+| 12 | **Reports** | (no canvas yet) | Transactions |
+| 13 | **Settings** | (no canvas yet) | Auth |
 
 ---
 
-## 6. Known Gaps (Found During Audit)
+## 6. Resolved Blockers (former "Known Gaps")
 
-### Foundation Gaps (Must be resolved before feature work)
-
-| Gap | Severity | Description |
-|---|---|---|
-| **Localization not configured** | 🔴 Blocker | `flutter_localizations` not in `pubspec.yaml`. Arabic-first app requires `.arb` files and `MaterialApp` locale config before any string can be written correctly. |
-| **Cairo / Tajawal fonts not registered** | 🔴 Blocker | `pubspec.yaml` has no `fonts:` section. The approved design mandates Cairo for body/headline and Tajawal for labels. Can use `google_fonts` package or bundled assets. |
-| **GoRouter not initialized** | 🔴 Blocker | Package declared but no router file or `MaterialApp.router` wrapper exists. |
-| **Supabase not initialized** | 🔴 Blocker | Package declared but no `Supabase.initialize()` call in `main()`. Requires `.env` or `--dart-define` for URL and anon key. |
-| **DI container not set up** | 🔴 Blocker | `get_it` + `injectable` declared but no `configureDependencies()` call and no `@module`/`@injectable` annotated classes. |
-| **Feature directories not scaffolded** | 🔴 Blocker | `lib/features/`, `lib/core/`, `lib/app/` do not exist yet. |
-| **RTL / Locale not set on MaterialApp** | 🔴 Blocker | `MaterialApp` lacks `locale: Locale('ar')` and `supportedLocales`/`localizationsDelegates`. |
-| **Primary color seed mismatch** | 🟡 Minor | `main.dart` uses `#0A7A3D`; Stitch DESIGN.md specifies `#004328` as primary and `#0D5C3A` as primary-container. Update theme seed during foundation task. |
-| **test/ directory missing** | 🟡 Minor | No test directory or widget_test.dart. Required for CI. |
-| **.env file not created** | 🟡 Minor | `flutter_dotenv` is a dependency but no `.env` example or template exists. |
-
-### Non-Blocking Observations
-
-| Item | Note |
+| Former Gap | Resolution |
 |---|---|
-| `pubspec.yaml` description | Still reads "A new Flutter project." — update to "Hesably — AI-powered bookkeeping for Egyptian merchants." |
-| `flutter_lints` v5 | v6 is available. Non-breaking upgrade acceptable at any time. |
-| 38 packages with newer versions | Acceptable. Run `flutter pub outdated` before each release. |
-| Offline local DB package | `offline-sync.md` mentions Hive or SQLite. Neither is in `pubspec.yaml` yet. Decision needed before Phase 7. |
-| Camera plugin | Not in `pubspec.yaml`. Required for Phase 6. `camera` or `image_picker` package decision needed. |
-| `google_fonts` or bundled fonts | Decision needed: bundle Cairo/Tajawal as assets or use `google_fonts` package. |
+| Localization not configured | ✅ `.arb` + gen_l10n + `flutter_localizations` |
+| Cairo / Tajawal fonts not registered | ✅ Cairo TTFs bundled; Tajawal dropped (not in current Stitch) |
+| GoRouter not initialized | ✅ `StatefulShellRoute.indexedStack`, 4 tabs + placeholder pages |
+| Supabase not initialized | ✅ Guarded `Supabase.initialize` in boot sequence |
+| DI container not set up | ✅ `getIt`/`injectable` + generated config |
+| Feature directories not scaffolded | ✅ `lib/features/` + `lib/core/` + `lib/app/` |
+| RTL / Locale not set | ✅ `locale: Locale('ar')`, delegates, `supportedLocales` |
+| Primary color seed mismatch | ✅ Resolved to `#0A7A3D` (current Stitch custom color) — old `#004328` CON-01 obsolete |
+| `test/` missing | ✅ 14 tests (env, theme, currency, error, app shell) |
+| `.env` template missing | ✅ `.env.example` created |
 
 ---
 
-## 7. Known Conflicts
+## 7. Open Decisions (previously "Known Conflicts" / required decisions)
 
-| Conflict ID | Description | Source A | Source B | Resolution |
-|---|---|---|---|---|
-| CON-01 | Primary color value | `main.dart` uses `#0A7A3D` as seed | Stitch DESIGN.md: primary `#004328`, primary-container `#0D5C3A` | **Use Stitch values.** Update `main.dart` during foundation task. |
-| CON-02 | Font prescription | `docs/mobile-app/theming.md` says "Cairo font" | Stitch design system also uses **Tajawal** for labels | **Not a conflict** — use Cairo for all body/headline and Tajawal for label role. |
-
----
-
-## 8. Required Decisions Before Feature Implementation
-
-The following decisions must be made before each respective phase begins:
-
-| Decision | Required By | Options | Recommendation |
-|---|---|---|---|
-| **D-01: Font loading strategy** | Phase 1 Foundation | `google_fonts` package vs bundled `.ttf` assets | Bundled assets — avoids network dependency, critical for low-end Android |
-| **D-02: Local DB for offline** | Phase 7 Offline | `hive_flutter`, `sqflite`, `drift` | `drift` (type-safe, query-friendly for complex pending queue) or `hive` (lightweight) |
-| **D-03: Camera approach** | Phase 6 Capture | `camera` (full control) vs `image_picker` (simpler) | `camera` for the approved viewfinder UI design |
-| **D-04: Supabase env loading** | Phase 1 Foundation | `--dart-define` at build time vs `flutter_dotenv` `.env` file | `--dart-define` for CI/CD; `.env` for local dev (already have `flutter_dotenv` dep) |
-| **D-05: Offline local ID strategy** | Phase 7 Offline | UUID v4 client-generated | UUID v4 — already aligned with ADR-007 |
-| **D-06: `google_fonts` version** | Phase 1 Foundation | Latest compatible version | Add to `pubspec.yaml` during foundation task |
+| Decision | Status | Recommendation |
+|---|---|---|
+| D-01: Font loading | ✅ **Resolved** | Bundled `.ttf` assets (Cairo 400/500/600/700) — no `google_fonts` |
+| D-04: Supabase env loading | ✅ **Resolved** | `--dart-define` (CI) + `.env` (local) via `AppEnvironment` |
+| D-02: Local DB for offline | ⏳ Open (Phase 7) | `drift` or `hive` — defer |
+| D-03: Camera approach | ⏳ Open (Phase 6) | `camera` (viewfinder UI) vs `image_picker` |
+| D-05: Offline ID strategy | ⏳ Open (Phase 7) | UUID v4 client-generated (aligned with ADR-007) |
+| CON-02: Font prescription | ✅ **Resolved** | Cairo for all roles; Tajawal dropped |
 
 ---
 
-## 9. Validation Results
+## 8. Validation Results
 
 | Check | Result | Detail |
 |---|---|---|
-| `flutter analyze` | ✅ **0 issues** | Ran at 2026-09-18, clean pass |
-| `flutter pub get` | ✅ **Success** | All 38 declared packages resolved |
-| `flutter test` | ⚠️ **Skipped** | `test/` directory not found — no tests written yet |
-| Dependency conflicts | ✅ **None** | No incompatible constraints |
-| `pubspec.yaml` syntax | ✅ **Valid** | Parsed correctly by pub |
-| Git status | ✅ **Clean** | 3 commits on `chore/mobile-scaffolding` |
-| Stitch project accessible | ✅ **Yes** | Project `13492244755370590843` inspected via Stitch MCP |
-| Historical docs used as design source | ✅ **No** | `docs/mobile-design/` accessed only to confirm deprecation status |
-| Production features implemented | ✅ **No** | Only placeholder page in `main.dart` |
-| Secrets in code | ✅ **None** | No API keys or tokens found in any committed file |
+| `flutter pub get` | ✅ **Success** | intl 0.20.2, shared_preferences 2.3.x resolved |
+| `dart run build_runner build` | ✅ **Success** | Generated `injection.config.dart` |
+| `dart format lib test` | ✅ **Clean** | 16 files formatted |
+| `flutter analyze` | ✅ **0 issues** | Clean pass |
+| `flutter test` | ✅ **14 passed** | Foundation test suite |
+| `flutter build web --debug` | ✅ **Success** | App compiles and boots |
+| Secrets in code | ✅ **None** | Only `.env.example` placeholders; Gemini key stays server-side |
+| Production features implemented | ✅ **No** | Only shell + placeholders in foundation scope |
 
 ---
 
-## 10. Reusable Components — Pre-Identified
+## 9. Reusable Components — Foundation-Ready Scaffold
 
-The following shared components will be needed across multiple screens. They should be built once in `lib/core/widgets/` or `lib/app/widgets/` and NOT duplicated inside features:
+The following are planned to live in `lib/core/widgets/`. Not yet built (foundation scope excludes product UI):
 
-| Component | Used By | Priority |
-|---|---|---|
-| `HesablyAppBar` | All primary screens | Foundation |
-| `BottomNavShell` | Home, Transactions, Reports, Settings | Phase 4 |
-| `PrimaryButton` / `SecondaryButton` | Auth, Setup, Review, Settings | Phase 2 |
-| `TransactionCard` | Home (recent), Transactions list | Phase 5/10 |
-| `CurrencyDisplay` | Home summary, Transaction detail, Reports | Phase 5 |
-| `DateRangeDisplay` | Transaction list, Reports | Phase 10/12 |
-| `EmptyStateWidget` | Home, Transactions, Reports, Categories | Phase 5 |
-| `LoadingStateWidget` | All data-driven screens | Foundation |
-| `ErrorStateWidget` | All data-driven screens | Foundation |
-| `ConfidenceBadge` | SCR-10 AI Review, SCR-07 detail | Phase 9 |
-| `SyncStatusIndicator` | SCR-14 Pending, Home | Phase 7 |
-| `ConfirmationDialog` | OVR-04, OVR-05, OVR-06, OVR-07 | Phase 10 |
-| `CategoryPickerSheet` | OVR-01 | Phase 11 |
-| `ExportOptionsSheet` | OVR-02 | Phase 12 |
-| `DateRangePickerSheet` | OVR-03 | Phase 10/12 |
+`BottomNavShell` (in `app_router.dart`), `PrimaryButton`/`SecondaryButton`, `TransactionCard`, `CurrencyDisplay` (backed by `EgCurrency`), `EmptyStateWidget`, `LoadingStateWidget`, `ErrorStateWidget` (backed by `AppFailure`), `ConfidenceBadge`, `SyncStatusIndicator`, `ConfirmationDialog`, `CategoryPickerSheet`, `ExportOptionsSheet`, `DateRangePickerSheet`.
 
 ---
 
-## 11. Testing Handoff
+## 10. Testing Handoff
 
-No tests are written yet. The following critical flows MUST have test coverage as they are implemented:
+Foundation tests in place (`test/`):
 
-| Flow | Test Type | Reason |
-|---|---|---|
-| `Auth / OTP` | Unit + Widget | Business-critical: wrong OTP handling = lock-out |
-| `Business Setup` | Unit | First-run gate; must not be bypassable |
-| `AI Review — never auto-save` | Unit (UseCase) | Core product contract violation risk |
-| `AI confidence thresholds` | Unit | 80% / 50% rules are product requirements |
-| `Offline capture → pending queue` | Unit + Integration | Core MVP feature |
-| `Sync state transitions` | Unit | OFFLINE ≠ ERROR ≠ PENDING ≠ SYNCING |
-| `Category deletion guard` | Unit | Default categories must never be deleteable |
-| `Transaction persistence` | Unit + Widget | Double-save / duplicate risk |
-| `Report date filtering` | Unit | Export respects active filters |
-| `Logout session clear` | Unit | Security requirement |
+| File | Covers |
+|---|---|
+| `test/config/app_environment_test.dart` | dart-define/.env precedence, `isBackendConfigured` |
+| `test/theme/app_theme_test.dart` | Tokens, Cairo family, 48dp buttons, scaffold bg |
+| `test/core/eg_currency_test.dart` | `1,250.50 ج.م` formatting, parse |
+| `test/core/app_failure_test.dart` | `mapError` canonicalization |
+| `test/app/app_smoke_test.dart` | Boot to shell, 4-tab navigation |
+
+Feature-phase tests to add (from prior handoff §11): Auth/OTP, Business Setup gate, AI never auto-save, confidence thresholds, offline queue, sync state transitions, category deletion guard, transaction persistence, report date filtering, logout session clear.
 
 ---
 
 ## Handoff Status
 
 ```
-IMPLEMENTATION READY WITH ISSUES
+FOUNDATION READY
 ```
 
-**The foundation compiles cleanly, analysis passes, and the Stitch design is fully mapped.**
-
-**However, 7 blocking foundation gaps must be resolved before any feature implementation begins:**
-1. Localization not configured
-2. Cairo / Tajawal fonts not registered
-3. GoRouter not initialized
-4. Supabase not initialized
-5. DI container not set up
-6. Feature directory structure not scaffolded
-7. RTL / Locale not set on MaterialApp
-
-**These gaps should be addressed in the next task: "App Foundation & Boot Sequence."**
+**The foundation phase is complete and validated: the app boots, shells the 4-tab navigation, themes from verified Stitch tokens, localizes Arabic-first, and passes all checks.** Product features begin with Phase 2 (Authentication), scoped to the current Stitch canvas.
