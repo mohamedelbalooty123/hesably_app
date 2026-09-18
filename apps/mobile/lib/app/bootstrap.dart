@@ -15,7 +15,9 @@ import 'di/injection.dart';
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
   await loadEnv();
-  final environment = AppEnvironment.fromDotEnv(dotenv.env);
+  final environment = AppEnvironment.fromDotEnv(
+    dotenv.isInitialized ? dotenv.env : const {},
+  );
 
   await configureDependencies(environment);
 
