@@ -3,32 +3,78 @@ import 'package:go_router/go_router.dart';
 
 import '../../l10n/app_localizations.dart';
 
+import '../../features/auth/presentation/cubit/auth_cubit.dart';
+import '../../features/auth/presentation/cubit/auth_state.dart';
+import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/otp_verification_screen.dart';
+import '../../features/auth/presentation/screens/splash_screen.dart';
+import 'go_router_refresh_stream.dart';
+
 /// Centralized GoRouter route table.
 ///
 /// The app shell hosts four destinations (Home, Transactions, Reports,
 /// Settings) using an indexed-stack shell that preserves each tab's stack.
-/// Auth and onboarding gates are declared but pending the auth feature:
-/// [redirect] currently leaves navigation unguarded until a session/business
-/// provider exists.
+/// Auth and onboarding gates are handled by the [redirect] method.
 class AppRouter {
-  AppRouter();
+  AppRouter(this.authCubit) {
+    _router = GoRouter(
+      initialLocation: '/splash',
+      refreshListenable: GoRouterRefreshStream(authCubit.stream),
+      redirect: _redirect,
+      routes: [
+        GoRoute(
+          path: '/splash',
+          builder: (context, state) => const SplashScreen(),
+        ),
+        GoRoute(
+          path: '/login',
+          builder: (context, state) => const LoginScreen(),
+        ),
+        GoRoute(
+          path: '/otp',
+          builder: (context, state) => const OtpVerificationScreen(),
+        ),
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) =>
+              AppShell(navigationShell: navigationShell),
+          branches: [
+            _shellBranch('/home', const _HomeScreen()),
+            _shellBranch('/transactions', const _TransactionsScreen()),
+            _shellBranch('/reports', const _ReportsScreen()),
+            _shellBranch('/settings', const _SettingsScreen()),
+          ],
+        ),
+      ],
+    );
+  }
 
-  final GoRouter _router = GoRouter(
-    initialLocation: '/home',
-    redirect: (context, state) => null,
-    routes: [
-      StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            AppShell(navigationShell: navigationShell),
-        branches: [
-          _shellBranch('/home', const _HomeScreen()),
-          _shellBranch('/transactions', const _TransactionsScreen()),
-          _shellBranch('/reports', const _ReportsScreen()),
-          _shellBranch('/settings', const _SettingsScreen()),
-        ],
-      ),
-    ],
-  );
+  final AuthCubit authCubit;
+  late final GoRouter _router;
+
+  String? _redirect(BuildContext context, GoRouterState state) {
+    final authState = authCubit.state;
+    final isSplash = state.uri.path == '/splash';
+    final isLoggingIn = state.uri.path == '/login' || state.uri.path == '/otp';
+
+    if (authState is AuthInitial) {
+      return isSplash ? null : '/splash';
+    }
+
+    if (authState is AuthUnauthenticated) {
+      return isLoggingIn ? null : '/login';
+    }
+
+    if (authState is AuthOtpSent) {
+      return state.uri.path == '/otp' ? null : '/otp';
+    }
+
+    if (authState is AuthAuthenticated) {
+      return (isSplash || isLoggingIn) ? '/home' : null;
+    }
+
+    // In AuthLoading, AuthFailure we stay where we are.
+    return null;
+  }
 
   static StatefulShellBranch _shellBranch(String path, Widget screen) {
     return StatefulShellBranch(
