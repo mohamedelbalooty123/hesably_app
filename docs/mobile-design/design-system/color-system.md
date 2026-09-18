@@ -16,7 +16,7 @@ Hesably is financial/productivity software for a non-technical small-shop owner 
 
 **Number of colors:** deliberately compact. 12 semantic roles in light mode + dark derivations, plus a small set of special-purpose roles (AI, offline, sync, pending, review). No more than necessary — every color must earn a place.
 
-> DESIGN INFERENCE: The brand color (a deep trusted green family) is a design-system decision rather than a sourced requirement. The repo has no brand-color spec. Green reads as "money/success/professional" in the Egyptian small-business context and gives a calm, trustworthy baseline distinct from the red "danger" end. It is an inference, flagged, and is overridable if a brand palette arrives later.
+> DESIGN INFERENCE (confirmed as design baseline for prototyping; formal brand approval pending): The brand color (a deep trusted green family) is a design-system decision rather than a sourced requirement. The repo has no brand-color spec. Green reads as "money/success/professional" in the Egyptian small-business context and gives a calm, trustworthy baseline distinct from the red "danger" end. It is an inference, flagged, and is overridable if a brand palette arrives later.
 
 ---
 

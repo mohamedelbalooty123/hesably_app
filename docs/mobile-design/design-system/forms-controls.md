@@ -96,7 +96,7 @@
 
 ## 12. Segmented control (period SCR-11)
 
-- Per `components.md` §segmented: Q-011 options only; Custom opens OVR-03.
+- Per `components.md` §segmented: Q-011 options only; Custom Range opens OVR-03.
 
 ---
 

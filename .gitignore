@@ -33,3 +33,6 @@ node_modules/
 # Python (skill scripts)
 __pycache__/
 *.pyc
+
+# Stitch scratch artifacts (downloaded screen HTML/PNG inspection copies)
+.stitch/

@@ -322,7 +322,7 @@ The implementation phase will validate against real query patterns:
 - **Category lookup:** `WHERE business_id=… AND name_key=…` → U3.
 - **Web access:** by `owner_id` (U1) / `web_email` (U2) — low volume.
 
-**Reports** (no persistent tables): derived from `transactions` with `business_id` + date/type/category/amount filters and `SUM`, supporting This Week / Month / Last Month / YTD / Custom Range, Total Income / Expenses / Net, Category Breakdown, Period Comparison.
+**Reports** (no persistent tables): derived from `transactions` with `business_id` + date/type/category/amount filters and `SUM`, supporting This Week / This Month / Last Month / Year-to-Date / Custom Range, Total Income / Expenses / Net, Category Breakdown, Period Comparison.
 
 **Export** (no export-history tables): RLS-scoped reads over the same period + active-filter set; CSV flat (transactions), Excel (summary/transactions/categories), PDF (period/totals/breakdown/list).
 

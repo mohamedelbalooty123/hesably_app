@@ -17,7 +17,7 @@ Notes:
 - If Cairo is unavailable, the system Arabic font must be an acceptable render; the design never depends on unavailable weights being synthesized at runtime (avoid `FontWeight.w700` fake on a 400-only bundle).
 - **Latin**: Cairo covers Latin numerals and Latin script adequately for embedded strings like `J.م`, brand name, and English-secondary mode. For English-heavy number columns, tabular figures preferred.
 
-> DESIGN INFERENCE: Cairo is the recommended family because it (a) ships Arabic + Latin in one family (avoids font-switching mid-string), (b) is designed for UI, (c) is freely bundled. No requirement mandates a specific font; this is an inference, overridable by a brand decision.
+> DESIGN INFERENCE (confirmed as design baseline for prototyping; formal brand approval pending): Cairo is the recommended family because it (a) ships Arabic + Latin in one family (avoids font-switching mid-string), (b) is designed for UI, (c) is freely bundled. No requirement mandates a specific font; this is an inference, overridable by a brand decision.
 
 ---
 

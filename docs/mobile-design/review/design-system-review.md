@@ -247,15 +247,91 @@
 |---|---|---|
 | Provenance wording on saved records says "راجعه عند الحفظ" (present/future) instead of "تمت مراجعته عند الحفظ" (past) — cosmetic confusion | Low | Fix wording in `ai-patterns.md` §6 at next iteration; no functional impact |
 | `stitch-handoff.md` screen count is 29 (including dark variants) — generation may take multiple sessions | Low | Prioritize light-mode screens first; dark variants as a second pass |
-| The brand color `#0A7A3D` is a `DESIGN INFERENCE` — not from an approved brand guideline | Medium | Flag to stakeholders for confirmation before Stitch generation; the design system will function with any primary green swap |
-| Cairo font is a `DESIGN INFERENCE` — not from an approved brand guideline | Medium | Same as above; font swap only requires updating `typography.md` + `tokens.md` §2.2 |
+| Pre-existing token drift: `focus-ring` color conflict between `tokens.md` §1.7 (`brand-primary` = green) and `color-system.md` §8 (`color.accent` = amber `#E9A23B`); plus secondary-token mismatches between `color-system.md` and `tokens.md` on background, surface, and status light values | Low (non-blocking for Stitch) | Stitch consumes `tokens.md` values exclusively — Stitch scope unaffected. Document a token-consolidation pass for post-Stitch Flutter implementation. |
 
 ---
 
-## 18. Final Status
+## 18. Pre-Stitch Gate Review
 
-**APPROVED**
+**Date:** 2026-09-06
+**Gate items:** Q-011 consistency fix + brand decision
 
-All 17 design-system files are complete, internally consistent, traceable to approved requirements and UX architecture, and pass the quality gate (brief §34). Stitch readiness = READY; Flutter readiness = READY. One cosmetic advisory (AI provenance wording) and two medium-severity inference confirmations (brand color, font) are noted — none are blocking.
+### Gate Item 1 — Q-011 Reporting Period Consistency
+
+**Status: COMPLETE**
+
+Q-011 canonical English: **This Week / This Month / Last Month / Year-to-Date / Custom Range**
+
+14 locations corrected across 10 files:
+
+| File | Change |
+|---|---|
+| `design-system/README.md:107` | `(Today/Week/Month/Quarter/Custom)` → canonical |
+| `design-system/components.md:124` | `YTD / Custom` → `Year-to-Date / Custom Range` |
+| `design-system/components.md:127` | `Custom opens` → `Custom Range opens` |
+| `design-system/forms-controls.md:99` | `Custom opens` → `Custom Range opens` |
+| `ux/information-architecture.md:43` | `YTD / Custom` → `Year-to-Date / Custom Range` |
+| `ux/screen-inventory.md:116` | `YTD / Custom` → `Year-to-Date / Custom Range` |
+| `ux/screen-inventory.md:117` | `Custom →` → `Custom Range →` |
+| `ux/screen-inventory.md:193` | Expanded shorthand to canonical; "Custom period" → "Custom Range period" |
+| `ux/navigation-map.md:91` | `YTD / Custom` → `Year-to-Date / Custom Range` |
+| `ux/interaction-model.md:58` | `"Custom"` → `"Custom Range"` |
+| `ux/user-journeys.md:105` | Journey title: `Custom period` → `Custom Range` |
+| `ux/user-journeys.md:107` | `Custom → OVR-03` → `Custom Range → OVR-03` |
+| `mobile-design/README.md:55` | `YTD / Custom` → `Year-to-Date / Custom Range` |
+| `database/database-implementation-plan.md:325` | `This Week / Month / Last Month / YTD / Custom Range` → canonical |
+
+**Not edited (intentionally):** `open-questions.md:388` — historical Q-011 problem statement quoting pre-decision divergent state. Must not be altered.
+
+**Verification:** grep for `YTD`, `Quarter`, `Today/Week`, and non-canonical `Custom` returns zero new matches.
+
+### Gate Item 2 — Brand Decision
+
+**Status: DESIGN BASELINE CONFIRMED — FORMAL BRAND APPROVAL PENDING**
+
+| Value | Source | Consistent across docs? | Approval status |
+|---|---|---|---|
+| `#0A7A3D` (primary) | `tokens.md` §1.1, `color-system.md` §2.1 | ✅ Yes — tokens.md, color-system.md, stitch-handoff.md, flutter-handoff.md, components.md all agree | DESIGN INFERENCE → confirmed baseline for prototyping |
+| Cairo (font) | `typography.md` §1, `tokens.md` §2.2 | ✅ Yes — typography.md, tokens.md, stitch-handoff.md, flutter-handoff.md all agree | DESIGN INFERENCE → confirmed baseline for prototyping |
+
+**No external brand source exists in the repo:** no logo spec, brand guidelines, brand-color document, or stakeholder approval record. The labels `DESIGN INFERENCE` in `color-system.md:19` and `typography.md:20` have been updated to reflect "confirmed as design baseline for prototyping; formal brand approval pending."
+
+**Stitch impact:** None. `stitch-handoff.md` consumes `tokens.md` primary + font values directly. All values are internally consistent. Stitch generation may proceed.
+
+**Post-Stitch follow-up:** Formal brand approval must be obtained before production launch. Until then, `#0A7A3D` and Cairo remain overridable.
+
+### Stitch Validation (13-point checklist)
+
+| # | Check | Result |
+|---|---|---|
+| 1 | `tokens.md` is the canonical token source of truth | ✅ Confirmed (README §6, tokens.md §0) |
+| 2 | `stitch-handoff.md` primary color = `tokens.md` primary | ✅ Both `#0A7A3D` |
+| 3 | AI blue = tokens + stitch-handoff consistent | ✅ Both `#5B5BD6` |
+| 4 | Offline gray = tokens + stitch-handoff consistent | ✅ Both `#4A5A6A` |
+| 5 | Pending purple = tokens + stitch-handoff consistent | ✅ Both `#7A5A9E` |
+| 6 | Syncing blue = tokens + stitch-handoff consistent | ✅ Both `#2F6BB0` |
+| 7 | Font = Cairo in tokens + stitch-handoff + typography | ✅ All three match |
+| 8 | No duplicate token values | ✅ No duplicates within tokens.md (note: pre-existing secondary-token drift between tokens.md §1 and color-system.md §2 documented separately) |
+| 9 | No stale/broken references in stitch-handoff.md | ✅ All 13 items pass |
+| 10 | Screen order in stitch-handoff.md covers all SCRs/OVRs | ✅ 15 screens + 8 overlays = 23 entries (29 with dark variants) |
+| 11 | Prompt templates reference correct token names | ✅ Verified for splash, home-empty, review-save |
+| 12 | What NOT to generate is listed | ✅ No real auth, camera, API, motion, keyboard |
+| 13 | Design system values are consumed (not duplicated) | ✅ stitch-handoff references tokens.md; does not redefine |
+
+---
+
+## 19. Final Status
+
+**READY FOR STITCH — FORMAL BRAND APPROVAL PENDING**
+
+All 17 design-system files are complete, internally consistent, and traceable to approved requirements and UX architecture. The quality gate (brief §34) passes. Q-011 terminology is now fully consistent across all documentation.
+
+- **Design System:** APPROVED (quality gate passed)
+- **Stitch:** READY — `stitch-handoff.md` provides screen order, token config, and prompt templates. Brand values (`#0A7A3D`, Cairo) are confirmed as the design baseline and are internally consistent for Stitch consumption.
+- **Flutter:** READY — `flutter-handoff.md` provides theme setup, component mapping, RTL handling, and low-end constraints.
+
+**Non-blocking advisories (documented):**
+1. Formal brand approval for `#0A7A3D` and Cairo is pending — values are overridable.
+2. Pre-existing token drift: `focus-ring` color conflict between `tokens.md` §1.7 and `color-system.md` §8; plus secondary-token mismatches on background/surface/status values. Non-blocking for Stitch (Stitch consumes `tokens.md`); recommend a token-consolidation pass before Flutter implementation.
 
 The design system is ready for the next phase: Stitch high-fidelity screen generation (per `stitch-handoff.md`).

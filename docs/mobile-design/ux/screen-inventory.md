@@ -113,8 +113,8 @@
 | Field | Content |
 |---|---|
 | Purpose | Period-driven insights + export (FR-DASH-004…007) |
-| Content | Period selector: This Week / This Month / Last Month / YTD / Custom (Q-011); summary: total income, total expenses, net; category breakdown (list + share bars); trend/steps across the period; **Export** button |
-| Actions | Change period; Custom → date-range picker (OVR-03); Export → OVR-02 |
+| Content | Period selector: This Week / This Month / Last Month / Year-to-Date / Custom Range (Q-011); summary: total income, total expenses, net; category breakdown (list + share bars); trend/steps across the period; **Export** button |
+| Actions | Change period; Custom Range → date-range picker (OVR-03); Export → OVR-02 |
 | Entry | Reports tab |
 | Exit | Export sheet; back/tab switch |
 | States | Loading (skeletons), empty (no data in period → explain + hint), error (retry), offline |
@@ -190,7 +190,7 @@ Bottom sheet used by SCR-10 (and filter in SCR-06 as a filter picker — same sh
 Bottom sheet from SCR-11. Format choice (PDF / Excel / CSV); period row (defaults to current view — Q-014); "تصدير" action → client-side generation → share sheet (FR-EXPORT-004). Note: export always respects active period + applied filters.
 
 ### OVR-03 Date-Range Picker — اختيار الفترة المخصصة
-Used by SCR-11 (Custom period) and OVR-02 (if a custom period is chosen inline). Start/end date selection; quick toggles (This week / month / last / YTD) + custom range; validation (start ≤ end, within accepted bounds).
+Used by SCR-11 (Custom Range period) and OVR-02 (if a custom period is chosen inline). Start/end date selection; quick toggles (This Week / This Month / Last Month / Year-to-Date) + Custom Range; validation (start ≤ end, within accepted bounds).
 
 ### OVR-04 Delete Transaction — تأكيد الحذف
 Confirmation dialog from SCR-07. Text restates the transaction identity ("حذف معاملة 'مشتريات — كشري' بقيمة 1,250 ج.م؟") + irreversibility note. Confirm → delete + refreshed list; cancel. (FR-TRANS-013, BR-TRANS-004.)
