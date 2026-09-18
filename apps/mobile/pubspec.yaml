@@ -1,5 +1,5 @@
 name: hesably
-description: "A new Flutter project."
+description: "Hesably — Smart Invoice Assistant. AI-powered receipt/invoice capture and bookkeeping for small Egyptian shop owners."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -41,8 +43,9 @@ dependencies:
   supabase_flutter: ^2.17.2
   equatable: ^3.0.0
   fpdart: ^1.2.0
-  intl: ^0.20.3
+  intl: any
   flutter_dotenv: ^6.0.1
+  shared_preferences: ^2.3.0
   path_provider: ^2.1.5
 
 dev_dependencies:
@@ -63,11 +66,24 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-400.ttf
+          weight: 400
+        - asset: assets/fonts/Cairo-500.ttf
+          weight: 500
+        - asset: assets/fonts/Cairo-600.ttf
+          weight: 600
+        - asset: assets/fonts/Cairo-700.ttf
+          weight: 700
 
   # To add assets to your application, add an assets section, like this:
   # assets:
