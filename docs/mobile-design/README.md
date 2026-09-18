@@ -1,5 +1,9 @@
 # Mobile Design — UX Discovery & Information Architecture
 
+> [!WARNING]
+> **HISTORICAL REFERENCE ONLY**
+> This directory contains old UX/UI/design artifacts. It was created before the current Stitch design workflow and MUST NOT override the current Stitch design. The final new Stitch project is the ONLY source of truth for the mobile visual design and screen composition.
+
 **Phase:** UX Discovery & Information Architecture (foundation before visual design)
 **Scope:** Flutter mobile app only (MVP). The Next.js dashboard has its own design path (`docs/architecture/dashboard-architecture.md`, `docs/requirements/user-flow-dashboard.md`).
 **Inputs:** All completed requirements, business-rule, architecture, database, and API-contract documents (see [Source of truth](#source-of-truth)).
