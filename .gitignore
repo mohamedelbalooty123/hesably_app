@@ -36,3 +36,28 @@ __pycache__/
 
 # Stitch scratch artifacts (downloaded screen HTML/PNG inspection copies)
 .stitch/
+
+# Antigravity IDE runtime skills (installed locally by the IDE, not project files)
+.agents/skills/banner-design/
+.agents/skills/brand/
+.agents/skills/code-to-design/
+.agents/skills/design-md/
+.agents/skills/design-system/
+.agents/skills/design/
+.agents/skills/enhance-prompt/
+.agents/skills/extract-design-md/
+.agents/skills/extract-static-html/
+.agents/skills/generate-design/
+.agents/skills/manage-design-system/
+.agents/skills/react-components/
+.agents/skills/react-native/
+.agents/skills/react-vite-dashboard/
+.agents/skills/remotion/
+.agents/skills/shadcn-ui/
+.agents/skills/site-md/
+.agents/skills/slides/
+.agents/skills/stitch-loop/
+.agents/skills/taste-design/
+.agents/skills/ui-styling/
+.agents/skills/ui-ux-pro-max/
+.agents/skills/upload-to-stitch/
