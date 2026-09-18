@@ -1,0 +1,19 @@
+{
+  "@@locale": "ar",
+  "appTitle": "حسابلي",
+  "navHome": "الرئيسية",
+  "navTransactions": "المعاملات",
+  "navReports": "التقارير",
+  "navSettings": "الإعدادات",
+  "placeholderTitle": "قيد التطوير",
+  "placeholderMessage": "هذه الشاشة ستُبنى في مرحلة تطوير الميزات.",
+  "commonLoading": "جارٍ التحميل…",
+  "commonError": "حدث خطأ غير متوقع.",
+  "commonRetry": "إعادة المحاولة",
+  "commonEmpty": "لا توجد بيانات بعد.",
+  "commonSave": "حفظ",
+  "commonCancel": "إلغاء",
+  "commonConfirm": "تأكيد",
+  "commonDelete": "حذف",
+  "egpSymbol": "ج.م"
+}

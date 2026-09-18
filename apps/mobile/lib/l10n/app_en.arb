@@ -1,0 +1,19 @@
+{
+  "@@locale": "en",
+  "appTitle": "Hesably",
+  "navHome": "Home",
+  "navTransactions": "Transactions",
+  "navReports": "Reports",
+  "navSettings": "Settings",
+  "placeholderTitle": "Under construction",
+  "placeholderMessage": "This screen will be built during the features phase.",
+  "commonLoading": "Loading…",
+  "commonError": "Something went wrong.",
+  "commonRetry": "Retry",
+  "commonEmpty": "No data yet.",
+  "commonSave": "Save",
+  "commonCancel": "Cancel",
+  "commonConfirm": "Confirm",
+  "commonDelete": "Delete",
+  "egpSymbol": "EGP"
+}
